@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -286,9 +286,10 @@
 // You can also set these via URL params:
 // ?url=https://xxx.supabase.co&key=eyJ...&device=smartboard
 const CONFIG = {
+const CONFIG = {
   supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',   // e.g. https://abcxyz.supabase.co
   supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',   // anon/public key
-  device:       'smartboard',  // device name in Supabase row
+   device:       'smartboard',  // device name in Supabase row
   notifBefore:  2,    // minutes before slot to notify
   pollInterval: 5000, // ms — how often to check Supabase
 };
@@ -389,8 +390,14 @@ function tick() {
   const now = nowMins();
   slots.forEach(s => {
     const diff = toMins(s.startTime) - now;
-    if (diff === CONFIG.notifBefore) fire(`⏰ ${s.label} in ${CONFIG.notifBefore} min`, `Starts at ${s.startTime}`, s.startTime + '-pre');
-    if (diff === 0) fire(`📢 ${s.label} — starting now!`, `It's ${s.startTime}`, s.startTime + '-now');
+    if (diff === CONFIG.notifBefore) {
+      const msg = s.notificationMessage || (s.label + ' in ' + CONFIG.notifBefore + ' min');
+      fire('⏰ ' + msg, 'Starts at ' + s.startTime, s.startTime + '-pre');
+    }
+    if (diff === 0) {
+      const msg2 = s.notificationMessage ? s.notificationMessage.replace('Next period', 'NOW') : (s.label + ' — starting now!');
+      fire('📢 ' + msg2, "It's " + s.startTime, s.startTime + '-now');
+    }
   });
 }
 
