@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OfficeSync — Schedule Notifier</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>OfficeSync</title>
 <style>
   :root {
     --bg: #0f1117;
     --surface: #1a1d27;
     --surface2: #22263a;
     --border: #2e3348;
-    --border2: #3d4260;
     --text: #e8eaf0;
     --text2: #8b90a8;
     --text3: #565c7a;
@@ -21,464 +19,426 @@
     --success: #4ade80;
     --success-bg: #0d2e1a;
     --warning: #f59e0b;
-    --warning-bg: #2a1f06;
     --danger: #f87171;
-    --danger-bg: #2a0f0f;
-    --radius: 10px;
-    --radius-sm: 6px;
+    --radius: 12px;
+    --radius-sm: 8px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
-  .shell { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 52px 1fr; min-height: 100vh; }
-  header { grid-column: 1 / -1; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; padding: 0 20px; }
-  .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
-  .logo-text span { color: var(--accent); }
-  .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-  .status-pill { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .pill-notif { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
-  .pill-notif.off { background: var(--surface2); color: var(--text2); border-color: var(--border); }
-  .pill-sync { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .pill-sync.off { background: var(--surface2); color: var(--text2); border-color: var(--border); }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .pill-notif.on .status-dot { animation: pulse 2s infinite; }
-  .pill-sync.live .status-dot { animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  nav { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; display: flex; flex-direction: column; gap: 2px; }
-  .nav-section { padding: 0 12px; margin-bottom: 4px; }
-  .nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); padding: 8px 6px 4px; }
-  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; user-select: none; }
-  .nav-item:hover { background: var(--surface2); color: var(--text); }
-  .nav-item.active { background: var(--accent-bg); color: var(--accent); }
-  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-  .sync-status { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
-  .sync-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text3); padding: 4px 6px; }
-  .sync-row svg { width: 12px; height: 12px; }
-  main { overflow-y: auto; padding: 24px; }
-  .page { display: none; }
-  .page.active { display: block; }
-  .page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 4px; }
-  .page-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
-  .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
-  .card-title svg { width: 14px; height: 14px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
-  .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
-  .stat-value.accent { color: var(--accent); }
-  .stat-value.success { color: var(--success); }
-  .stat-value.warning { color: var(--warning); }
-  .next-up { background: var(--accent-bg); border: 1px solid var(--accent-dim); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
-  .next-up::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
-  .next-up-label { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
-  .next-up-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-  .next-up-time { font-size: 13px; color: var(--text2); }
-  .countdown { font-size: 28px; font-weight: 700; color: var(--accent); margin-top: 8px; letter-spacing: -1px; }
-  .timeline { display: flex; flex-direction: column; gap: 2px; }
-  .slot-row { display: grid; grid-template-columns: 70px 1fr auto; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.15s; }
-  .slot-row:hover { background: var(--surface2); border-color: var(--border); }
-  .slot-row.done { opacity: 0.4; }
-  .slot-row.next { background: var(--accent-bg); border-color: var(--accent-dim); }
-  .slot-row.active-now { background: var(--success-bg); border-color: #1a4a2a; }
-  .slot-time { font-size: 12px; font-weight: 600; color: var(--text3); font-variant-numeric: tabular-nums; }
-  .slot-row.next .slot-time { color: var(--accent); }
-  .slot-row.active-now .slot-time { color: var(--success); }
-  .slot-name { font-size: 13px; }
-  .slot-row.active-now .slot-name { color: var(--success); font-weight: 500; }
-  .slot-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .badge-next { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .badge-active { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
-  .badge-done { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
-  .day-tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--surface2); padding: 4px; border-radius: var(--radius); width: fit-content; }
-  .day-tab { padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text2); transition: all 0.15s; user-select: none; }
-  .day-tab:hover { color: var(--text); }
-  .day-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-  .upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-bg); }
-  .upload-zone svg { width: 32px; height: 32px; color: var(--text3); margin-bottom: 10px; }
-  .upload-zone:hover svg { color: var(--accent); }
-  .upload-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-  .upload-sub { font-size: 12px; color: var(--text2); }
-  .upload-input { display: none; }
-  .template-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .template-table th { background: var(--surface2); padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); border-bottom: 1px solid var(--border); }
-  .template-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
-  .template-table tr:last-child td { border-bottom: none; }
-  .template-table tr:hover td { background: var(--surface2); color: var(--text); }
-  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
-  .btn svg { width: 14px; height: 14px; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #5a7aff; }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--border2); }
-  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #4a1a1a; }
-  .btn-danger:hover { background: #3a1010; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-  .form-group { margin-bottom: 14px; }
-  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; display: block; }
-  input[type="text"], input[type="number"], input[type="time"], select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 8px 12px; font-size: 13px; outline: none; transition: border-color 0.15s; }
-  input:focus, select:focus { border-color: var(--accent); }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .inline-alert { display: flex; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 12px; align-items: flex-start; }
-  .inline-alert.info { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .inline-alert.success { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
-  .inline-alert.warning { background: var(--warning-bg); color: var(--warning); border: 1px solid #3a2a06; }
-  .inline-alert svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
-  .empty-state { text-align: center; padding: 48px 20px; color: var(--text3); }
-  .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-state h3 { font-size: 15px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
-  .empty-state p { font-size: 12px; }
-  #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
-  .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 13px; max-width: 300px; animation: slideIn 0.2s ease; display: flex; align-items: center; gap: 8px; }
-  .toast.success { border-left: 3px solid var(--success); }
-  .toast.warning { border-left: 3px solid var(--warning); }
-  .toast.info { border-left: 3px solid var(--accent); }
-  @keyframes slideIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
-  .realtime-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 3px 8px; border-radius: 10px; background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; margin-left: 8px; }
-  .realtime-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
-  code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 11px; font-family: monospace; color: var(--accent); }
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-  @media (max-width: 680px) {
-    .shell { grid-template-columns: 1fr; grid-template-rows: 52px auto 1fr; }
-    nav { grid-row: 2; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); padding: 8px 12px; overflow-x: auto; }
-    .nav-section { display: flex; gap: 4px; padding: 0; margin: 0; }
-    .nav-label { display: none; }
-    .sync-status { display: none; }
-    main { padding: 16px; }
-    .form-grid { grid-template-columns: 1fr; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
   }
+
+  .app { width: 100%; max-width: 520px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo {
+    font-size: 40px;
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .title span { color: var(--accent); }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  /* Big enable button */
+  .enable-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .enable-btn:hover { background: #5a7aff; transform: translateY(-1px); }
+  .enable-btn:disabled { background: var(--success); cursor: default; transform: none; }
+  .enable-btn svg { width: 20px; height: 20px; }
+
+  /* Status card */
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .status-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .status-row:first-child { padding-top: 0; }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.green { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse 2s infinite; }
+  .dot.yellow { background: var(--warning); }
+  .dot.red { background: var(--danger); }
+  .dot.grey { background: var(--text3); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .status-label { color: var(--text2); flex: 1; }
+  .status-val { font-weight: 500; }
+  .status-val.green { color: var(--success); }
+  .status-val.yellow { color: var(--warning); }
+  .status-val.red { color: var(--danger); }
+
+  /* Next up */
+  .next-card {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+  }
+  .next-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+  .next-label { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .next-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .next-time { font-size: 13px; color: var(--text2); }
+  .next-countdown { font-size: 32px; font-weight: 800; color: var(--accent); margin-top: 8px; letter-spacing: -1px; }
+
+  /* Timeline */
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .timeline-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+  .slot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    margin-bottom: 2px;
+  }
+  .slot.done { opacity: 0.35; }
+  .slot.is-next { background: var(--accent-bg); }
+  .slot.is-now { background: var(--success-bg); }
+  .slot-time { font-size: 12px; font-weight: 600; color: var(--text3); width: 44px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .slot.is-next .slot-time { color: var(--accent); }
+  .slot.is-now .slot-time { color: var(--success); }
+  .slot-name { font-size: 13px; flex: 1; }
+  .slot.is-now .slot-name { color: var(--success); font-weight: 500; }
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-now { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
+  .badge-next { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .badge-done { background: var(--surface2); color: var(--text3); }
+
+  /* Clock */
+  .clock {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 8px;
+  }
+  .clock span { color: var(--text2); font-weight: 500; }
+
+  /* Empty */
+  .empty {
+    text-align: center;
+    padding: 30px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  /* Toast */
+  #toasts {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 999;
+  }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    font-size: 13px;
+    animation: slideIn 0.2s ease;
+    max-width: 260px;
+  }
+  .toast.s { border-left: 3px solid var(--success); }
+  .toast.w { border-left: 3px solid var(--warning); }
+  .toast.i { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from{transform:translateX(16px);opacity:0} to{transform:translateX(0);opacity:1} }
 </style>
 </head>
 <body>
-<div class="shell">
 
-  <header>
+<div class="app">
+
+  <div class="header">
     <div class="logo">📅</div>
-    <span class="logo-text">Office<span>Sync</span></span>
-    <div class="header-right">
-      <div class="status-pill pill-sync off" id="sync-pill">
-        <div class="status-dot"></div>
-        <span id="sync-pill-text">Supabase off</span>
-      </div>
-      <div class="status-pill pill-notif off" id="notif-pill">
-        <div class="status-dot"></div>
-        <span id="notif-pill-text">Notifications off</span>
-      </div>
+    <div class="title">Office<span>Sync</span></div>
+    <div class="subtitle" id="date-label">Loading...</div>
+  </div>
+
+  <!-- Enable button -->
+  <button class="enable-btn" id="enable-btn" onclick="enableNotifications()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span id="enable-btn-text">Allow Notifications</span>
+  </button>
+
+  <!-- Status -->
+  <div class="status-card">
+    <div class="status-row">
+      <div class="dot grey" id="dot-notif"></div>
+      <span class="status-label">Notifications</span>
+      <span class="status-val" id="val-notif">Off</span>
     </div>
-  </header>
-
-  <nav>
-    <div class="nav-section">
-      <div class="nav-label">Overview</div>
-      <div class="nav-item active" onclick="showPage('dashboard',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Dashboard
-      </div>
-      <div class="nav-item" onclick="showPage('schedule',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Schedule
-      </div>
+    <div class="status-row">
+      <div class="dot grey" id="dot-sync"></div>
+      <span class="status-label">Supabase sync</span>
+      <span class="status-val" id="val-sync">Not configured</span>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">Setup</div>
-      <div class="nav-item" onclick="showPage('upload',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Upload Timetable
-      </div>
-      <div class="nav-item" onclick="showPage('settings',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Settings
-      </div>
+    <div class="status-row">
+      <div class="dot grey" id="dot-data"></div>
+      <span class="status-label">Timetable</span>
+      <span class="status-val" id="val-data">No data</span>
     </div>
-    <div class="sync-status">
-      <div class="sync-row" id="local-status">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        Local: ready
-      </div>
-      <div class="sync-row" id="cloud-status">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-        Cloud: not configured
-      </div>
-    </div>
-  </nav>
+  </div>
 
-  <main>
+  <!-- Next up -->
+  <div class="next-card" id="next-card">
+    <div class="next-label">⏰ Up next</div>
+    <div class="next-name" id="next-name">—</div>
+    <div class="next-time" id="next-time-label">—</div>
+    <div class="next-countdown" id="next-countdown">—</div>
+  </div>
 
-    <!-- Dashboard -->
-    <div class="page active" id="page-dashboard">
-      <div class="page-title">Today's Schedule</div>
-      <div class="page-sub" id="today-label">Loading...</div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Slots today</div><div class="stat-value accent" id="stat-total">—</div></div>
-        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value success" id="stat-done">—</div></div>
-        <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value warning" id="stat-remaining">—</div></div>
-        <div class="stat-card"><div class="stat-label">Current time</div><div class="stat-value" id="stat-clock" style="font-size:16px">—</div></div>
-      </div>
-      <div id="next-up-card" class="next-up" style="display:none">
-        <div class="next-up-label">⏰ Up next</div>
-        <div class="next-up-title" id="next-title">—</div>
-        <div class="next-up-time" id="next-time">—</div>
-        <div class="countdown" id="countdown">—</div>
-      </div>
-      <div class="card">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Today's periods
-        </div>
-        <div class="timeline" id="today-timeline">
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <h3>No timetable loaded</h3><p>Configure Supabase in Settings or upload a file</p>
-          </div>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="enableNotifications()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Enable notifications
-        </button>
-        <button class="btn btn-secondary" onclick="manualSync()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Sync now
-        </button>
-      </div>
-    </div>
+  <!-- Timeline -->
+  <div class="timeline-card">
+    <div class="timeline-title" id="timeline-title">Today's schedule</div>
+    <div id="timeline"><div class="empty">No timetable loaded yet</div></div>
+  </div>
 
-    <!-- Schedule -->
-    <div class="page" id="page-schedule">
-      <div class="page-title">Full Schedule</div>
-      <div class="page-sub">View your timetable across all days</div>
-      <div class="day-tabs" id="day-tabs"></div>
-      <div class="card">
-        <div class="timeline" id="schedule-timeline">
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
-            <h3>No timetable loaded</h3><p>Upload your schedule or sync from Supabase</p>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="clock">Time: <span id="clock">—</span></div>
 
-    <!-- Upload -->
-    <div class="page" id="page-upload">
-      <div class="page-title">Upload Timetable</div>
-      <div class="page-sub">Upload locally — or edit directly in Supabase for auto-sync</div>
-      <div class="inline-alert info">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <div>Columns required: <code>Day</code> <code>Slot</code> <code>Label</code> <code>StartTime</code> (HH:MM format)</div>
-      </div>
-      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div class="upload-title">Drop your file here or click to browse</div>
-        <div class="upload-sub">Supports .xlsx, .xls, .json</div>
-      </div>
-      <input type="file" id="file-input" class="upload-input" accept=".xlsx,.xls,.json" onchange="handleFileUpload(this.files[0])">
-      <div class="btn-row" style="margin-top:0;margin-bottom:16px">
-        <button class="btn btn-secondary" onclick="downloadTemplate()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download template (.xlsx)
-        </button>
-        <button class="btn btn-secondary" onclick="downloadJSONTemplate()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Download template (.json)
-        </button>
-      </div>
-      <div id="upload-preview" style="display:none">
-        <div class="card">
-          <div class="card-title">Preview</div>
-          <div id="preview-content"></div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="saveTimetable()">Save timetable</button>
-            <button class="btn btn-secondary" onclick="clearUploadPreview()">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Settings -->
-    <div class="page" id="page-settings">
-      <div class="page-title">Settings</div>
-      <div class="page-sub">Configure Supabase for auto-sync and notifications</div>
-
-      <div class="card">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-          Supabase — auto sync
-          <span class="realtime-badge" id="realtime-badge" style="display:none"><span class="dot"></span> Live</span>
-        </div>
-
-        <div class="inline-alert info" style="margin-bottom:14px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <div>
-            <strong>Setup:</strong> supabase.com → New project → SQL Editor → run the SQL below → Settings → API → copy URL + anon key.<br><br>
-            <strong>Update timetable from anywhere:</strong> Supabase dashboard → Table Editor → <code>officesync_timetable</code> → edit row → app updates automatically within 3 seconds.
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:14px;background:var(--surface2)">
-          <div class="card-title" style="font-size:11px">SQL to run once in Supabase SQL Editor</div>
-          <pre style="font-size:11px;color:var(--accent);line-height:1.6;overflow-x:auto;font-family:monospace">create table if not exists officesync_timetable (
-  id uuid default gen_random_uuid() primary key,
-  device text not null unique,
-  data text not null,
-  updated_at timestamptz default now()
-);
-alter table officesync_timetable enable row level security;
-create policy "Allow all" on officesync_timetable
-  for all using (true) with check (true);</pre>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Supabase project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Supabase anon key</label>
-          <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Device name</label>
-          <input type="text" id="device-name" placeholder="Office Smartboard">
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="saveSupabaseConfig()">Save & connect</button>
-          <button class="btn btn-secondary" onclick="manualSync()">Sync now</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          Notification settings
-        </div>
-        <div class="form-group">
-          <label class="form-label">Notify me this many minutes before each slot</label>
-          <input type="number" id="notif-before" value="2" min="1" max="30" style="width:120px">
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="saveSettings()">Save</button>
-          <button class="btn btn-secondary" onclick="testNotification()">Test notification</button>
-          <button class="btn btn-secondary" onclick="enableNotifications()">Re-enable notifications</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Danger zone</div>
-        <div class="btn-row">
-          <button class="btn btn-danger" onclick="clearAll()">Clear all local data</button>
-        </div>
-      </div>
-    </div>
-
-  </main>
 </div>
 
-<div id="toast-container"></div>
+<div id="toasts"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────
-let timetable = {};
-let pendingData = null;
-let settings = { notifBefore: 2 };
-let sbConfig = { url: '', key: '', device: '' };
-let notifEnabled = false;
-let selectedDay = '';
-let realtimeChannel = null;
-let pollInterval = null;
-let notifCheckInterval = null;
-let lastNotifiedSlot = '';
+// ── CONFIG — paste your Supabase details here ──────────────────────────
+// You can also set these via URL params:
+// ?url=https://xxx.supabase.co&key=eyJ...&device=smartboard
+const CONFIG = {
+  supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',   // e.g. https://abcxyz.supabase.co
+  supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',   // anon/public key
+  device:       'smartboard',  // device name in Supabase row
+  notifBefore:  2,    // minutes before slot to notify
+  pollInterval: 5000, // ms — how often to check Supabase
+};
+// ── END CONFIG ──────────────────────────────────────────────────────────
 
-const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let timetable = {};
+let notifEnabled = false;
+let lastFiredKey = '';
+let pollTimer = null;
+
+// Read URL params (override CONFIG)
+const params = new URLSearchParams(location.search);
+if (params.get('url')) CONFIG.supabaseUrl = params.get('url');
+if (params.get('key')) CONFIG.supabaseKey = params.get('key');
+if (params.get('device')) CONFIG.device = params.get('device');
+if (params.get('before')) CONFIG.notifBefore = parseInt(params.get('before'));
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function todayName() { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; }
 
 // ── Boot ───────────────────────────────────────────────────────────────
-function init() {
-  loadFromLocal();
-  loadSettings();
-  loadSbConfig();
-  setInterval(updateClock, 1000);
+async function init() {
   updateClock();
-  renderDashboard();
-  setupDragDrop();
-  // Restore notification check loop
-  if (notifEnabled) startNotifLoop();
-  // Auto-connect supabase if config exists
-  if (sbConfig.url && sbConfig.key) connectSupabase();
+  setInterval(updateClock, 1000);
+  setInterval(tick, 30000);
+
+  // Load cached timetable
+  const cached = localStorage.getItem('os_tt');
+  if (cached) { try { timetable = JSON.parse(cached); renderTimeline(); } catch {} }
+
+  // Check notification permission
+  if (Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+  }
+
+  // Start Supabase polling
+  if (CONFIG.supabaseUrl && CONFIG.supabaseKey) {
+    startPolling();
+  } else {
+    setStatus('sync', 'grey', 'Not configured', '');
+  }
+
+  await registerSW();
 }
 
-// ── Navigation ─────────────────────────────────────────────────────────
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  if (el) el.classList.add('active');
-  if (id === 'schedule') renderSchedulePage();
-  if (id === 'dashboard') renderDashboard();
-}
-
-// ── Clock ──────────────────────────────────────────────────────────────
 function updateClock() {
-  const t = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  const el = document.getElementById('stat-clock');
-  if (el) el.textContent = t;
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('date-label').textContent =
+    now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
 }
 
-function timeToMins(t) {
-  const [h,m] = t.split(':').map(Number); return h*60+m;
-}
-function nowMins() {
-  const n = new Date(); return n.getHours()*60+n.getMinutes();
-}
-function todayName() {
-  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+// ── Supabase polling ───────────────────────────────────────────────────
+function startPolling() {
+  setStatus('sync', 'yellow', 'Connecting...', '');
+  fetchData();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(fetchData, CONFIG.pollInterval);
 }
 
-// ── Dashboard ──────────────────────────────────────────────────────────
-function renderDashboard() {
+async function fetchData() {
+  try {
+    const url = `${CONFIG.supabaseUrl}/rest/v1/officesync_timetable?device=eq.${encodeURIComponent(CONFIG.device)}&select=data,updated_at&order=updated_at.desc&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'apikey': CONFIG.supabaseKey, 'Authorization': `Bearer ${CONFIG.supabaseKey}` }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    if (!rows.length) {
+      setStatus('sync', 'yellow', 'Connected — no data', '');
+      setStatus('data', 'grey', 'No row found', '');
+      return;
+    }
+    const newStr = rows[0].data;
+    const newTT = JSON.parse(newStr);
+    const changed = JSON.stringify(newTT) !== JSON.stringify(timetable);
+    timetable = newTT;
+    localStorage.setItem('os_tt', newStr);
+    setStatus('sync', 'green', 'Live ✓', 'green');
+    const days = Object.keys(timetable).length;
+    setStatus('data', 'green', `${days} days loaded`, 'green');
+    if (changed) { renderTimeline(); toast('Timetable updated', 's'); }
+    tick();
+  } catch(e) {
+    setStatus('sync', 'red', 'Error — retrying', 'red');
+  }
+}
+
+// ── Tick — check notifications ─────────────────────────────────────────
+function tick() {
+  renderTimeline();
+  if (!notifEnabled) return;
+  const slots = timetable[todayName()] || [];
+  const now = nowMins();
+  slots.forEach(s => {
+    const diff = toMins(s.startTime) - now;
+    if (diff === CONFIG.notifBefore) fire(`⏰ ${s.label} in ${CONFIG.notifBefore} min`, `Starts at ${s.startTime}`, s.startTime + '-pre');
+    if (diff === 0) fire(`📢 ${s.label} — starting now!`, `It's ${s.startTime}`, s.startTime + '-now');
+  });
+}
+
+function fire(title, body, key) {
+  if (lastFiredKey === key) return;
+  lastFiredKey = key;
+  new Notification(title, { body, icon: './icon.png', tag: key, requireInteraction: false });
+}
+
+// ── Render timeline ────────────────────────────────────────────────────
+function renderTimeline() {
   const day = todayName();
   const slots = timetable[day] || [];
   const now = nowMins();
 
-  document.getElementById('today-label').textContent =
-    new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('timeline-title').textContent = `${day}'s schedule`;
 
-  const done = slots.filter(s => timeToMins(s.startTime) < now).length;
-  document.getElementById('stat-total').textContent = slots.length || '—';
-  document.getElementById('stat-done').textContent = slots.length ? done : '—';
-  document.getElementById('stat-remaining').textContent = slots.length ? (slots.length - done) : '—';
-
-  const nextSlot = slots.find(s => timeToMins(s.startTime) > now);
-  const card = document.getElementById('next-up-card');
-  if (nextSlot) {
-    card.style.display = 'block';
-    document.getElementById('next-title').textContent = nextSlot.label;
-    document.getElementById('next-time').textContent = `Starts at ${nextSlot.startTime}`;
-    const diff = timeToMins(nextSlot.startTime) - now;
-    document.getElementById('countdown').textContent = diff === 1 ? '1 min away' : `${diff} mins away`;
-  } else {
-    card.style.display = 'none';
-  }
-
-  const tl = document.getElementById('today-timeline');
   if (!slots.length) {
-    tl.innerHTML = `<div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <h3>No schedule for today</h3><p>Configure Supabase or upload a timetable</p></div>`;
+    document.getElementById('timeline').innerHTML = `<div class="empty">No slots found for ${day}</div>`;
+    document.getElementById('next-card').style.display = 'none';
     return;
   }
 
-  tl.innerHTML = slots.map(s => {
-    const smins = timeToMins(s.startTime);
+  const nextSlot = slots.find(s => toMins(s.startTime) > now);
+
+  // Next card
+  const nc = document.getElementById('next-card');
+  if (nextSlot) {
+    nc.style.display = 'block';
+    document.getElementById('next-name').textContent = nextSlot.label;
+    const diff = toMins(nextSlot.startTime) - now;
+    document.getElementById('next-time-label').textContent = `Starts at ${nextSlot.startTime}`;
+    document.getElementById('next-countdown').textContent = diff === 1 ? '1 min away' : `${diff} mins away`;
+  } else {
+    nc.style.display = 'none';
+  }
+
+  // Timeline rows
+  document.getElementById('timeline').innerHTML = slots.map(s => {
+    const smins = toMins(s.startTime);
+    const isNow = smins <= now && smins > now - 45;
     const isNext = nextSlot && s.startTime === nextSlot.startTime;
-    const isActiveNow = smins <= now && smins > now - 45;
-    const isDone = smins < now && !isActiveNow;
-    const cls = isActiveNow ? 'active-now' : isNext ? 'next' : isDone ? 'done' : '';
-    const badge = isActiveNow ? '<span class="slot-badge badge-active">Now</span>'
-                : isNext ? '<span class="slot-badge badge-next">Next</span>'
-                : isDone ? '<span class="slot-badge badge-done">Done</span>' : '';
-    return `<div class="slot-row ${cls}">
+    const isDone = smins < now && !isNow;
+    const cls = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
+    const badge = isNow ? '<span class="badge badge-now">Now</span>'
+                : isNext ? '<span class="badge badge-next">Next</span>'
+                : isDone ? '<span class="badge badge-done">Done</span>' : '';
+    return `<div class="slot ${cls}">
       <span class="slot-time">${s.startTime}</span>
       <span class="slot-name">${s.label}</span>
       ${badge}
@@ -486,388 +446,60 @@ function renderDashboard() {
   }).join('');
 }
 
-// ── Schedule page ──────────────────────────────────────────────────────
-function renderSchedulePage() {
-  const days = Object.keys(timetable);
-  const tabsEl = document.getElementById('day-tabs');
-  const tlEl = document.getElementById('schedule-timeline');
-  if (!days.length) { tabsEl.innerHTML = ''; return; }
-  if (!selectedDay || !timetable[selectedDay]) selectedDay = days[0];
-  tabsEl.innerHTML = days.map(d =>
-    `<div class="day-tab ${d===selectedDay?'active':''}" onclick="selectDay('${d}')">${d.slice(0,3)}</div>`
-  ).join('');
-  const slots = timetable[selectedDay] || [];
-  const now = nowMins();
-  const isToday = selectedDay === todayName();
-  tlEl.innerHTML = slots.map(s => {
-    const isDone = isToday && timeToMins(s.startTime) < now;
-    return `<div class="slot-row ${isDone?'done':''}">
-      <span class="slot-time">${s.startTime}</span>
-      <span class="slot-name">${s.label}</span>
-      ${isDone ? '<span class="slot-badge badge-done">Done</span>' : ''}
-    </div>`;
-  }).join('') || '<div style="padding:20px;color:var(--text3);text-align:center">No slots for this day</div>';
-}
-
-function selectDay(day) { selectedDay = day; renderSchedulePage(); }
-
-// ── Supabase connect + realtime ────────────────────────────────────────
-async function connectSupabase() {
-  if (!sbConfig.url || !sbConfig.key) return;
-  updateCloudStatus('connecting...');
-
-  // First fetch
-  await fetchFromSupabase();
-
-  // Realtime via polling every 5 seconds (works even without supabase-js)
-  if (pollInterval) clearInterval(pollInterval);
-  pollInterval = setInterval(fetchFromSupabase, 5000);
-
-  // Try native realtime with supabase-js if available
-  tryRealtimeWebSocket();
-
-  document.getElementById('sync-pill').className = 'status-pill pill-sync live';
-  document.getElementById('sync-pill-text').textContent = 'Supabase live';
-}
-
-async function fetchFromSupabase() {
-  if (!sbConfig.url || !sbConfig.key) return;
-  try {
-    const res = await fetch(
-      `${sbConfig.url}/rest/v1/officesync_timetable?device=eq.${encodeURIComponent(sbConfig.device||'default')}&select=data,updated_at&order=updated_at.desc&limit=1`,
-      { headers: { 'apikey': sbConfig.key, 'Authorization': `Bearer ${sbConfig.key}` } }
-    );
-    if (!res.ok) return;
-    const rows = await res.json();
-    if (!rows.length) return;
-    const newData = JSON.parse(rows[0].data);
-    const newStr = JSON.stringify(newData);
-    // Only update if data actually changed
-    if (newStr !== JSON.stringify(timetable)) {
-      timetable = newData;
-      saveToLocal();
-      renderDashboard();
-      if (document.getElementById('page-schedule').classList.contains('active')) renderSchedulePage();
-      updateCloudStatus('synced ✓');
-      toast('Timetable updated from Supabase', 'success');
-    } else {
-      updateCloudStatus('synced ✓');
-    }
-  } catch(e) {
-    updateCloudStatus('error — retrying');
-  }
-}
-
-// WebSocket realtime (bonus — faster than polling)
-function tryRealtimeWebSocket() {
-  try {
-    const wsUrl = sbConfig.url.replace('https://', 'wss://').replace('http://', 'ws://') + '/realtime/v1/websocket?apikey=' + sbConfig.key + '&vsn=1.0.0';
-    const ws = new WebSocket(wsUrl);
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ topic: 'realtime:public:officesync_timetable', event: 'phx_join', payload: {}, ref: '1' }));
-      document.getElementById('realtime-badge').style.display = 'inline-flex';
-    };
-    ws.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.event === 'postgres_changes' || msg.event === 'INSERT' || msg.event === 'UPDATE') {
-        fetchFromSupabase();
-      }
-    };
-    ws.onerror = () => { /* polling fallback already running */ };
-  } catch(e) { /* polling handles it */ }
-}
-
-async function manualSync() {
-  if (!sbConfig.url || !sbConfig.key) { toast('Configure Supabase in Settings first', 'warning'); return; }
-  toast('Syncing...', 'info');
-  await fetchFromSupabase();
-}
-
-async function pushToSupabase() {
-  if (!sbConfig.url || !sbConfig.key) return;
-  try {
-    const res = await fetch(`${sbConfig.url}/rest/v1/officesync_timetable`, {
-      method: 'POST',
-      headers: {
-        'apikey': sbConfig.key,
-        'Authorization': `Bearer ${sbConfig.key}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        device: sbConfig.device || 'default',
-        data: JSON.stringify(timetable),
-        updated_at: new Date().toISOString()
-      })
-    });
-    if (res.ok || res.status === 201) {
-      updateCloudStatus('pushed ✓');
-      toast('Timetable pushed to Supabase', 'success');
-    } else {
-      const err = await res.json().catch(()=>({}));
-      if (err.code === '42P01') toast('Run the SQL in Settings first to create the table', 'warning');
-      else toast('Push failed: ' + (err.message || res.status), 'warning');
-    }
-  } catch(e) { toast('Push error: ' + e.message, 'warning'); }
-}
-
-// ── Notifications — persistent loop ───────────────────────────────────
+// ── Notifications ──────────────────────────────────────────────────────
 async function enableNotifications() {
-  if (!('Notification' in window)) { toast('Notifications not supported', 'warning'); return; }
+  if (Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Already enabled!', 's');
+    return;
+  }
   const perm = await Notification.requestPermission();
   if (perm === 'granted') {
     notifEnabled = true;
-    localStorage.setItem('officesync_notif', 'granted');
-    updateNotifPill(true);
-    startNotifLoop();
-    registerSW();
-    toast('Notifications enabled!', 'success');
+    updateNotifStatus(true);
+    toast('Notifications enabled! ✓', 's');
+    tick();
   } else {
-    toast('Permission denied — allow in browser settings', 'warning');
+    toast('Permission denied — allow in browser bar', 'w');
   }
 }
 
-function startNotifLoop() {
-  if (notifCheckInterval) clearInterval(notifCheckInterval);
-  // Check every 30 seconds
-  notifCheckInterval = setInterval(checkAndNotify, 30000);
-  checkAndNotify();
-}
-
-function checkAndNotify() {
-  if (!notifEnabled || Notification.permission !== 'granted') return;
-  const day = todayName();
-  const slots = timetable[day] || [];
-  const now = nowMins();
-  const before = settings.notifBefore;
-
-  slots.forEach(s => {
-    const diff = timeToMins(s.startTime) - now;
-    const key = s.startTime + '-' + diff;
-
-    if (diff === before && lastNotifiedSlot !== key) {
-      lastNotifiedSlot = key;
-      fireNotif(`⏰ ${s.label} in ${before} min`, `Starts at ${s.startTime}`);
-    }
-    if (diff === 0 && lastNotifiedSlot !== key + '-now') {
-      lastNotifiedSlot = key + '-now';
-      fireNotif(`📢 ${s.label} — starting now!`, `It's ${s.startTime}`);
-    }
-  });
-}
-
-function fireNotif(title, body) {
-  new Notification(title, { body, icon: '📅', requireInteraction: false });
-  // Also tell SW so it can show even if tab is in background
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'SHOW_NOTIF', title, body
-    });
+function updateNotifStatus(on) {
+  setStatus('notif', on ? 'green' : 'grey', on ? 'Enabled ✓' : 'Off', on ? 'green' : '');
+  const btn = document.getElementById('enable-btn');
+  const txt = document.getElementById('enable-btn-text');
+  if (on) {
+    btn.disabled = true;
+    txt.textContent = '✓ Notifications Active';
   }
 }
 
-function testNotification() {
-  if (Notification.permission !== 'granted') { toast('Enable notifications first', 'warning'); return; }
-  fireNotif('Test — OfficeSync', 'Notifications are working!');
-  toast('Test notification sent', 'info');
-}
-
+// ── Service worker ─────────────────────────────────────────────────────
 async function registerSW() {
   if ('serviceWorker' in navigator) {
     try { await navigator.serviceWorker.register('./sw.js'); } catch(e) {}
   }
 }
 
-function updateNotifPill(on) {
-  const pill = document.getElementById('notif-pill');
-  pill.className = 'status-pill pill-notif ' + (on ? 'on' : 'off');
-  document.getElementById('notif-pill-text').textContent = on ? 'Notifications on' : 'Notifications off';
+// ── UI helpers ─────────────────────────────────────────────────────────
+function setStatus(id, dotColor, text, textColor) {
+  const dot = document.getElementById('dot-' + id);
+  const val = document.getElementById('val-' + id);
+  dot.className = 'dot ' + dotColor;
+  val.textContent = text;
+  val.className = 'status-val ' + (textColor || '');
 }
 
-// ── File upload ────────────────────────────────────────────────────────
-function setupDragDrop() {
-  const zone = document.getElementById('drop-zone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); handleFileUpload(e.dataTransfer.files[0]); });
-}
-
-function handleFileUpload(file) {
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'json') {
-    const r = new FileReader();
-    r.onload = e => {
-      try { pendingData = JSON.parse(e.target.result); showPreview(pendingData); toast('JSON loaded', 'success'); }
-      catch { toast('Invalid JSON', 'warning'); }
-    };
-    r.readAsText(file);
-  } else if (['xlsx','xls'].includes(ext)) {
-    const r = new FileReader();
-    r.onload = e => {
-      try {
-        const wb = XLSX.read(e.target.result, {type:'binary'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-        pendingData = parseRows(rows);
-        showPreview(pendingData);
-        toast('Excel loaded', 'success');
-      } catch { toast('Could not parse Excel', 'warning'); }
-    };
-    r.readAsBinaryString(file);
-  } else { toast('Use .xlsx or .json', 'warning'); }
-}
-
-function parseRows(rows) {
-  const data = {};
-  rows.forEach(r => {
-    const day = r['Day']||r['day'];
-    const slot = r['Slot']||r['slot'];
-    const label = r['Label']||r['label']||r['Name']||r['name'];
-    const time = String(r['StartTime']||r['startTime']||r['Start Time']||'').trim();
-    if (!day||!label||!time) return;
-    if (!data[day]) data[day] = [];
-    data[day].push({ slot: String(slot), label: String(label), startTime: time });
-  });
-  return data;
-}
-
-function showPreview(data) {
-  const days = Object.keys(data);
-  let html = '';
-  days.slice(0,2).forEach(day => {
-    html += `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">${day}</div>`;
-    html += '<table class="template-table"><thead><tr><th>Slot</th><th>Label</th><th>Start</th></tr></thead><tbody>';
-    data[day].forEach(s => { html += `<tr><td>${s.slot}</td><td>${s.label}</td><td>${s.startTime}</td></tr>`; });
-    html += '</tbody></table></div>';
-  });
-  if (days.length > 2) html += `<div style="color:var(--text3);font-size:12px;margin-top:8px">...and ${days.length-2} more days</div>`;
-  document.getElementById('preview-content').innerHTML = html;
-  document.getElementById('upload-preview').style.display = 'block';
-}
-
-function saveTimetable() {
-  if (!pendingData) return;
-  timetable = pendingData;
-  saveToLocal();
-  pushToSupabase();
-  renderDashboard();
-  clearUploadPreview();
-  toast('Timetable saved!', 'success');
-}
-
-function clearUploadPreview() {
-  pendingData = null;
-  document.getElementById('upload-preview').style.display = 'none';
-  document.getElementById('file-input').value = '';
-}
-
-// ── Templates ──────────────────────────────────────────────────────────
-function downloadJSONTemplate() {
-  const t = {};
-  DAYS.forEach(day => { t[day] = [
-    {slot:'1',label:'Assembly',startTime:'08:00'},
-    {slot:'2',label:'Period 1',startTime:'08:45'},
-    {slot:'3',label:'Period 2',startTime:'09:30'},
-    {slot:'4',label:'Period 3',startTime:'10:20'},
-    {slot:'5',label:'Period 4',startTime:'11:05'},
-    {slot:'Lunch',label:'Lunch Break',startTime:'13:00'},
-    {slot:'6',label:'Period 5',startTime:'13:45'},
-    {slot:'7',label:'Period 6',startTime:'14:30'},
-    {slot:'8',label:'Leave for Home',startTime:'16:00'}
-  ]; });
-  const blob = new Blob([JSON.stringify(t,null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='officesync-template.json'; a.click();
-  toast('JSON template downloaded','info');
-}
-
-function downloadTemplate() {
-  const rows = [];
-  DAYS.forEach(day => {
-    [['1','Assembly','08:00'],['2','Period 1','08:45'],['3','Period 2','09:30'],['4','Period 3','10:20'],['5','Period 4','11:05'],['Lunch','Lunch Break','13:00'],['6','Period 5','13:45'],['7','Period 6','14:30'],['8','Leave for Home','16:00']]
-    .forEach(([s,l,t]) => rows.push({Day:day,Slot:s,Label:l,StartTime:t}));
-  });
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Timetable');
-  XLSX.writeFile(wb,'officesync-template.xlsx');
-  toast('Excel template downloaded','info');
-}
-
-// ── Settings ───────────────────────────────────────────────────────────
-function saveSettings() {
-  settings.notifBefore = parseInt(document.getElementById('notif-before').value)||2;
-  localStorage.setItem('officesync_settings', JSON.stringify(settings));
-  toast('Settings saved','success');
-}
-function loadSettings() {
-  const s = localStorage.getItem('officesync_settings');
-  if (s) { settings = {...settings,...JSON.parse(s)}; document.getElementById('notif-before').value = settings.notifBefore; }
-}
-
-// ── Supabase config ────────────────────────────────────────────────────
-function saveSupabaseConfig() {
-  sbConfig = {
-    url: document.getElementById('sb-url').value.trim().replace(/\/$/,''),
-    key: document.getElementById('sb-key').value.trim(),
-    device: document.getElementById('device-name').value.trim() || 'default'
-  };
-  localStorage.setItem('officesync_sb', JSON.stringify(sbConfig));
-  connectSupabase();
-  toast('Supabase connected!','success');
-}
-function loadSbConfig() {
-  const s = localStorage.getItem('officesync_sb');
-  if (s) {
-    sbConfig = JSON.parse(s);
-    document.getElementById('sb-url').value = sbConfig.url||'';
-    document.getElementById('sb-key').value = sbConfig.key||'';
-    document.getElementById('device-name').value = sbConfig.device||'';
-  }
-}
-function updateCloudStatus(st) {
-  document.getElementById('cloud-status').innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-    Cloud: ${st}`;
-}
-
-// ── Local storage ──────────────────────────────────────────────────────
-function saveToLocal() {
-  localStorage.setItem('officesync_timetable', JSON.stringify(timetable));
-  document.getElementById('local-status').innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-    Local: saved`;
-}
-function loadFromLocal() {
-  const t = localStorage.getItem('officesync_timetable');
-  if (t) { try { timetable = JSON.parse(t); } catch {} }
-  const n = localStorage.getItem('officesync_notif');
-  if (n === 'granted' && Notification.permission === 'granted') {
-    notifEnabled = true;
-    updateNotifPill(true);
-  }
-}
-
-function clearAll() {
-  if (!confirm('Clear all local data?')) return;
-  localStorage.clear();
-  timetable = {}; notifEnabled = false;
-  updateNotifPill(false);
-  renderDashboard();
-  toast('Cleared','warning');
-}
-
-// ── Toast ──────────────────────────────────────────────────────────────
-function toast(msg, type='info') {
+function toast(msg, type='i') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(()=>el.remove(), 3500);
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
 }
 
-// ── Dashboard refresh every 30s ────────────────────────────────────────
-setInterval(renderDashboard, 30000);
-
+// ── Start ──────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
