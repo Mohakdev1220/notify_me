@@ -1,0 +1,73 @@
+{
+  "Monday": [
+    { "slot": "1", "label": "Physics", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - Physics!" },
+    { "slot": "2", "label": "Games", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - Games!" },
+    { "slot": "3", "label": "AI", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - AI!" },
+    { "slot": "4", "label": "Maths", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - Maths!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "Hindi", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - Hindi!" },
+    { "slot": "6", "label": "Bio", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - Bio!" },
+    { "slot": "7", "label": "Eng", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - Eng!" },
+    { "slot": "8", "label": "SST", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - SST!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+  ],
+  "Tuesday": [
+    { "slot": "1", "label": "Physics", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - Physics!" },
+    { "slot": "2", "label": "English Conv", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - English Conv!" },
+    { "slot": "3", "label": "SST", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - SST!" },
+    { "slot": "4", "label": "English", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - English!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "Biology", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - Biology!" },
+    { "slot": "6", "label": "English", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - English!" },
+    { "slot": "7", "label": "Maths", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - Maths!" },
+    { "slot": "8", "label": "Hindi", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - Hindi!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+  ],
+  "Wednesday": [
+    { "slot": "1", "label": "SST", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - SST!" },
+    { "slot": "2", "label": "Library", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - Library!" },
+    { "slot": "3", "label": "Maths", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - Maths!" },
+    { "slot": "4", "label": "English", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - English!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "SST", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - SST!" },
+    { "slot": "6", "label": "Chemistry", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - Chemistry!" },
+    { "slot": "7", "label": "Maths", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - Maths!" },
+    { "slot": "8", "label": "Games", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - Games!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+  ],
+  "Thursday": [
+    { "slot": "1", "label": "GK", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - GK!" },
+    { "slot": "2", "label": "Maths", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - Maths!" },
+    { "slot": "3", "label": "Moral Scie", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - Moral Scie!" },
+    { "slot": "4", "label": "SST", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - SST!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "Hindi", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - Hindi!" },
+    { "slot": "6", "label": "English", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - English!" },
+    { "slot": "7", "label": "C", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - C!" },
+    { "slot": "8", "label": "C", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - C!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+  ],
+  "Friday": [
+    { "slot": "1", "label": "Maths", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - Maths!" },
+    { "slot": "2", "label": "Chemistry", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - Chemistry!" },
+    { "slot": "3", "label": "SST", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - SST!" },
+    { "slot": "4", "label": "Maths", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - Maths!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "Physics", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - Physics!" },
+    { "slot": "6", "label": "Music/Dance", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - Music/Dance!" },
+    { "slot": "7", "label": "AI", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - AI!" },
+    { "slot": "8", "label": "Hindi", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - Hindi!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+  ],
+  "Saturday": [
+    { "slot": "1", "label": "Chemi", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - Chemi!" },
+    { "slot": "2", "label": "SST", "startTime": "08:30", "notificationTime": "08:28", "notificationMessage": "Next period - SST!" },
+    { "slot": "3", "label": "English", "startTime": "09:10", "notificationTime": "09:08", "notificationMessage": "Next period - English!" },
+    { "slot": "4", "label": "Bio", "startTime": "09:50", "notificationTime": "09:48", "notificationMessage": "Next period - Bio!" },
+    { "slot": "Lunch", "label": "Lunch Break", "startTime": "10:30", "notificationTime": "10:28", "notificationMessage": "Next period - Lunch Break!" },
+    { "slot": "5", "label": "AI", "startTime": "11:05", "notificationTime": "11:03", "notificationMessage": "Next period - AI!" },
+    { "slot": "6", "label": "Hindi", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - Hindi!" },
+    { "slot": "7", "label": "Maths", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - Maths!" },
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - Leave for Home!" }
+  ]
+}
