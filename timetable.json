@@ -9,7 +9,7 @@
     { "slot": "6", "label": "Bio", "startTime": "11:45", "notificationTime": "11:43", "notificationMessage": "Next period - Bio!" },
     { "slot": "7", "label": "Eng", "startTime": "12:25", "notificationTime": "12:23", "notificationMessage": "Next period - Eng!" },
     { "slot": "8", "label": "SST", "startTime": "13:05", "notificationTime": "13:03", "notificationMessage": "Next period - SST!" },
-    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next period - Leave for Home!" }
+    { "slot": "Departure", "label": "Leave for Home", "startTime": "13:45", "notificationTime": "13:43", "notificationMessage": "Next - Leave for Home!" }
   ],
   "Tuesday": [
     { "slot": "1", "label": "Physics", "startTime": "07:50", "notificationTime": "07:48", "notificationMessage": "Next period - Physics!" },
