@@ -3,7 +3,7 @@ const CACHE = 'officesync-v2';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
   self.skipWaiting();
-});
+}); 
 
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 
