@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OfficeSync — Schedule Notifier</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3348;
+    --border2: #3d4260;
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --text3: #565c7a;
+    --accent: #6c8fff;
+    --accent-bg: #1a2340;
+    --accent-dim: #3d5299;
+    --success: #4ade80;
+    --success-bg: #0d2e1a;
+    --warning: #f59e0b;
+    --warning-bg: #2a1f06;
+    --danger: #f87171;
+    --danger-bg: #2a0f0f;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 52px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+  }
+
+  .logo {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .logo-text { font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #1a4a2a;
+  }
+
+  .status-pill.off {
+    background: var(--surface2);
+    color: var(--text2);
+    border-color: var(--border);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-pill.on .status-dot { animation: pulse 2s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Sidebar ── */
+  nav {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-section {
+    padding: 0 12px;
+    margin-bottom: 4px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    padding: 8px 6px 4px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-bg); color: var(--accent); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .sync-status {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .sync-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 4px 6px;
+  }
+
+  .sync-row svg { width: 12px; height: 12px; }
+
+  /* ── Main ── */
+  main {
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+  }
+
+  .page-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 24px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-title svg { width: 14px; height: 14px; }
+
+  /* ── Dashboard Grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.success { color: var(--success); }
+  .stat-value.warning { color: var(--warning); }
+
+  /* ── Next Up card ── */
+  .next-up {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .next-up::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .next-up-label { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .next-up-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .next-up-time { font-size: 13px; color: var(--text2); }
+  .countdown { font-size: 28px; font-weight: 700; color: var(--accent); margin-top: 8px; letter-spacing: -1px; }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 2px; }
+
+  .slot-row {
+    display: grid;
+    grid-template-columns: 70px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .slot-row:hover { background: var(--surface2); border-color: var(--border); }
+
+  .slot-row.done { opacity: 0.4; }
+  .slot-row.next { background: var(--accent-bg); border-color: var(--accent-dim); }
+  .slot-row.active { background: var(--success-bg); border-color: #1a4a2a; }
+
+  .slot-time { font-size: 12px; font-weight: 600; color: var(--text3); font-variant-numeric: tabular-nums; }
+  .slot-row.next .slot-time { color: var(--accent); }
+  .slot-row.active .slot-time { color: var(--success); }
+
+  .slot-name { font-size: 13px; }
+  .slot-row.active .slot-name { color: var(--success); font-weight: 500; }
+
+  .slot-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .badge-next { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .badge-active { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
+  .badge-done { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+
+  /* ── Tabs ── */
+  .day-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: var(--radius);
+    width: fit-content;
+  }
+
+  .day-tab {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .day-tab:hover { color: var(--text); }
+  .day-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+  /* ── Upload ── */
+  .upload-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-bg); }
+  .upload-zone svg { width: 32px; height: 32px; color: var(--text3); margin-bottom: 10px; }
+  .upload-zone:hover svg { color: var(--accent); }
+  .upload-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .upload-sub { font-size: 12px; color: var(--text2); }
+
+  .upload-input { display: none; }
+
+  /* ── Template preview ── */
+  .template-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .template-table th {
+    background: var(--surface2);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .template-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .template-table tr:last-child td { border-bottom: none; }
+  .template-table tr:hover td { background: var(--surface2); color: var(--text); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .btn svg { width: 14px; height: 14px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #5a7aff; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--border2); }
+
+  .btn-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #4a1a1a;
+  }
+  .btn-danger:hover { background: #3a1010; }
+
+  .btn-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #1a4a2a;
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; display: block; }
+
+  input[type="text"], input[type="number"], input[type="time"], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Supabase config ── */
+  .config-section { margin-bottom: 20px; }
+  .config-section:last-child { margin-bottom: 0; }
+
+  .inline-alert {
+    display: flex; gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+
+  .inline-alert.info { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .inline-alert.success { background: var(--success-bg); color: var(--success); border: 1px solid #1a4a2a; }
+  .inline-alert.warning { background: var(--warning-bg); color: var(--warning); border: 1px solid #3a2a06; }
+
+  .inline-alert svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state h3 { font-size: 15px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .empty-state p { font-size: 12px; }
+
+  /* ── Toast ── */
+  #toast-container {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 9999;
+  }
+
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    max-width: 280px;
+    animation: slideIn 0.2s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.warning { border-left: 3px solid var(--warning); }
+  .toast.info { border-left: 3px solid var(--accent); }
+
+  @keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Mobile ── */
+  @media (max-width: 680px) {
+    .shell { grid-template-columns: 1fr; grid-template-rows: 52px auto 1fr; }
+    nav { grid-row: 2; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); padding: 8px 12px; overflow-x: auto; }
+    .nav-section { display: flex; gap: 4px; padding: 0; margin: 0; }
+    .nav-label { display: none; }
+    .sync-status { display: none; }
+    main { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">📅</div>
+    <span class="logo-text">Office<span>Sync</span></span>
+    <div class="header-right">
+      <div class="status-pill off" id="notif-status">
+        <div class="status-dot"></div>
+        <span id="notif-status-text">Notifications off</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('schedule', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Schedule
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Setup</div>
+      <div class="nav-item" onclick="showPage('upload', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Timetable
+      </div>
+      <div class="nav-item" onclick="showPage('settings', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+
+    <div class="sync-status">
+      <div class="sync-row" id="local-status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Local: ready
+      </div>
+      <div class="sync-row" id="cloud-status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        Cloud: not configured
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+
+    <!-- ── Dashboard ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Today's Schedule</div>
+      <div class="page-sub" id="today-label">Loading...</div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Slots today</div>
+          <div class="stat-value accent" id="stat-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value success" id="stat-done">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value warning" id="stat-remaining">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Current time</div>
+          <div class="stat-value" id="stat-clock" style="font-size:16px">—</div>
+        </div>
+      </div>
+
+      <div id="next-up-card" class="next-up" style="display:none">
+        <div class="next-up-label">⏰ Up next</div>
+        <div class="next-up-title" id="next-title">—</div>
+        <div class="next-up-time" id="next-time">—</div>
+        <div class="countdown" id="countdown">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Today's periods
+        </div>
+        <div class="timeline" id="today-timeline">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h3>No timetable loaded</h3>
+            <p>Upload your schedule to get started</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="enable-notif-btn" onclick="enableNotifications()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Enable notifications
+        </button>
+        <button class="btn btn-secondary" onclick="showPage('upload', document.querySelector('.nav-item:nth-child(3)'))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload timetable
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Schedule ── -->
+    <div class="page" id="page-schedule">
+      <div class="page-title">Full Schedule</div>
+      <div class="page-sub">View your timetable across all days</div>
+
+      <div class="day-tabs" id="day-tabs"></div>
+
+      <div class="card">
+        <div class="timeline" id="schedule-timeline">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h3>No timetable loaded</h3>
+            <p>Upload your Excel or JSON schedule file</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Upload ── -->
+    <div class="page" id="page-upload">
+      <div class="page-title">Upload Timetable</div>
+      <div class="page-sub">Upload your office schedule in Excel or JSON format</div>
+
+      <div class="inline-alert info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>Use the template below. Columns: <strong>Day, Slot, Label, StartTime</strong> (HH:MM format). Add up to 10 slots per day across 6 days.</div>
+      </div>
+
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="upload-title">Drop your file here or click to browse</div>
+        <div class="upload-sub">Supports .xlsx, .xls, .json — max 5MB</div>
+      </div>
+      <input type="file" id="file-input" class="upload-input" accept=".xlsx,.xls,.json" onchange="handleFileUpload(this.files[0])">
+
+      <div class="btn-row" style="margin-top:0; margin-bottom:16px">
+        <button class="btn btn-secondary" onclick="downloadTemplate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download template (.xlsx)
+        </button>
+        <button class="btn btn-secondary" onclick="downloadJSONTemplate()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Download template (.json)
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Template format</div>
+        <table class="template-table">
+          <thead>
+            <tr><th>Day</th><th>Slot</th><th>Label</th><th>StartTime</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Monday</td><td>1</td><td>Assembly</td><td>08:00</td></tr>
+            <tr><td>Monday</td><td>2</td><td>Period 1</td><td>08:45</td></tr>
+            <tr><td>Monday</td><td>3</td><td>Period 2</td><td>09:30</td></tr>
+            <tr><td>Monday</td><td>4</td><td>Period 3</td><td>10:20</td></tr>
+            <tr><td>Monday</td><td>Lunch</td><td>Lunch Break</td><td>13:00</td></tr>
+            <tr><td>Monday</td><td>6</td><td>Period 5</td><td>13:45</td></tr>
+            <tr><td>Monday</td><td>7</td><td>Period 6</td><td>14:30</td></tr>
+            <tr><td>Monday</td><td>8</td><td>Period 7</td><td>15:15</td></tr>
+            <tr><td>Monday</td><td>9</td><td>Leave for home</td><td>16:00</td></tr>
+            <tr><td style="color:var(--text3)">Tuesday</td><td style="color:var(--text3)">...</td><td style="color:var(--text3)">...</td><td style="color:var(--text3)">...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="upload-preview" style="display:none">
+        <div class="card">
+          <div class="card-title">Loaded data preview</div>
+          <div id="preview-content"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="saveTimetable()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save timetable
+            </button>
+            <button class="btn btn-danger" onclick="clearTimetable()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div class="page" id="page-settings">
+      <div class="page-title">Settings</div>
+      <div class="page-sub">Configure notifications and cloud sync</div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notification settings
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notify me this many minutes before each slot</label>
+          <input type="number" id="notif-before" value="2" min="1" max="30" style="width:100px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notification sound</label>
+          <select id="notif-sound">
+            <option value="none">No sound</option>
+            <option value="default" selected>System default</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+          <button class="btn btn-secondary" onclick="testNotification()">Test notification</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          Supabase cloud sync
+        </div>
+
+        <div class="inline-alert info" style="margin-bottom:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div>Create a free Supabase project at <strong>supabase.com</strong> → Get your Project URL and anon key from Project Settings → API.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supabase project URL</label>
+          <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supabase anon key</label>
+          <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Device name (to identify this device)</label>
+          <input type="text" id="device-name" placeholder="Office Laptop">
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveSupabaseConfig()">Save & connect</button>
+          <button class="btn btn-secondary" onclick="syncFromCloud()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Pull from cloud
+          </button>
+          <button class="btn btn-secondary" onclick="syncToCloud()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Push to cloud
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Danger zone</div>
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="clearAll()">Clear all data</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let timetable = {};       // { Monday: [{slot, label, startTime}], ... }
+let pendingData = null;   // before save
+let settings = { notifBefore: 2 };
+let supabaseConfig = { url: '', key: '', device: '' };
+let notifEnabled = false;
+let checkInterval = null;
+let selectedDay = '';
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// ── Init ──────────────────────────────────────────────
+function init() {
+  loadFromLocal();
+  loadSettings();
+  loadSupabaseConfig();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(checkNotifications, 30000);
+  setupDragDrop();
+  renderDashboard();
+}
+
+// ── Navigation ────────────────────────────────────────
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'schedule') renderSchedulePage();
+  if (id === 'dashboard') renderDashboard();
+}
+
+// ── Clock & time utils ────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  const el = document.getElementById('stat-clock');
+  if (el) el.textContent = t;
+  renderDashboard();
+}
+
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTime(mins) {
+  const h = Math.floor(mins / 60).toString().padStart(2, '0');
+  const m = (mins % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+function nowMinutes() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function todayName() {
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+}
+
+// ── Dashboard ─────────────────────────────────────────
+function renderDashboard() {
+  const day = todayName();
+  const slots = timetable[day] || [];
+  const now = nowMinutes();
+
+  document.getElementById('today-label').textContent =
+    new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  const done = slots.filter(s => timeToMinutes(s.startTime) < now).length;
+  const rem = slots.length - done;
+
+  document.getElementById('stat-total').textContent = slots.length || '—';
+  document.getElementById('stat-done').textContent = slots.length ? done : '—';
+  document.getElementById('stat-remaining').textContent = slots.length ? rem : '—';
+
+  // Next up
+  const nextSlot = slots.find(s => timeToMinutes(s.startTime) > now);
+  const nextCard = document.getElementById('next-up-card');
+  if (nextSlot) {
+    nextCard.style.display = 'block';
+    document.getElementById('next-title').textContent = nextSlot.label;
+    document.getElementById('next-time').textContent = `Starts at ${nextSlot.startTime}`;
+    const diff = timeToMinutes(nextSlot.startTime) - now;
+    document.getElementById('countdown').textContent = diff === 1 ? '1 min away' : `${diff} mins away`;
+  } else {
+    nextCard.style.display = 'none';
+  }
+
+  // Timeline
+  const tl = document.getElementById('today-timeline');
+  if (!slots.length) {
+    tl.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <h3>No schedule for today</h3><p>Upload your timetable or check another day</p></div>`;
+    return;
+  }
+
+  tl.innerHTML = slots.map(s => {
+    const smins = timeToMinutes(s.startTime);
+    const isNext = nextSlot && s.label === nextSlot.label && s.startTime === nextSlot.startTime;
+    const isActive = smins <= now && smins > now - 45;
+    const isDone = smins < now && !isActive;
+    const cls = isActive ? 'active' : isNext ? 'next' : isDone ? 'done' : '';
+    const badge = isActive ? '<span class="slot-badge badge-active">Now</span>'
+                : isNext ? '<span class="slot-badge badge-next">Next</span>'
+                : isDone ? '<span class="slot-badge badge-done">Done</span>' : '';
+    return `<div class="slot-row ${cls}">
+      <span class="slot-time">${s.startTime}</span>
+      <span class="slot-name">${s.label}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+// ── Schedule page ─────────────────────────────────────
+function renderSchedulePage() {
+  const days = Object.keys(timetable);
+  const tabsEl = document.getElementById('day-tabs');
+  const tlEl = document.getElementById('schedule-timeline');
+
+  if (!days.length) {
+    tabsEl.innerHTML = '';
+    tlEl.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <h3>No timetable loaded</h3><p>Upload your Excel or JSON schedule file</p></div>`;
+    return;
+  }
+
+  if (!selectedDay || !timetable[selectedDay]) selectedDay = days[0];
+
+  tabsEl.innerHTML = days.map(d =>
+    `<div class="day-tab ${d === selectedDay ? 'active' : ''}" onclick="selectDay('${d}')">${d.slice(0,3)}</div>`
+  ).join('');
+
+  renderDaySlots(selectedDay, tlEl);
+}
+
+function selectDay(day) {
+  selectedDay = day;
+  renderSchedulePage();
+}
+
+function renderDaySlots(day, container) {
+  const slots = timetable[day] || [];
+  const now = nowMinutes();
+  const isToday = day === todayName();
+
+  container.innerHTML = slots.map(s => {
+    const smins = timeToMinutes(s.startTime);
+    const isDone = isToday && smins < now;
+    return `<div class="slot-row ${isDone ? 'done' : ''}">
+      <span class="slot-time">${s.startTime}</span>
+      <span class="slot-name">${s.label}</span>
+      <span class="slot-badge ${isDone ? 'badge-done' : ''}" style="opacity:${isDone?'1':'0'}">${isDone ? 'Done' : ''}</span>
+    </div>`;
+  }).join('') || '<div style="padding:20px;color:var(--text3);text-align:center">No slots for this day</div>';
+}
+
+// ── File upload ───────────────────────────────────────
+function setupDragDrop() {
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag');
+    handleFileUpload(e.dataTransfer.files[0]);
+  });
+}
+
+function handleFileUpload(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'json') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        pendingData = data;
+        showPreview(data);
+        toast('JSON loaded successfully', 'success');
+      } catch { toast('Invalid JSON file', 'warning'); }
+    };
+    reader.readAsText(file);
+  } else if (['xlsx','xls'].includes(ext)) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'binary'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+        const data = parseExcelRows(rows);
+        pendingData = data;
+        showPreview(data);
+        toast('Excel loaded successfully', 'success');
+      } catch(err) { toast('Could not parse Excel file', 'warning'); }
+    };
+    reader.readAsBinaryString(file);
+  } else {
+    toast('Unsupported file type. Use .xlsx or .json', 'warning');
+  }
+}
+
+function parseExcelRows(rows) {
+  const data = {};
+  rows.forEach(r => {
+    const day = r['Day'] || r['day'];
+    const slot = r['Slot'] || r['slot'];
+    const label = r['Label'] || r['label'] || r['Name'] || r['name'];
+    const time = String(r['StartTime'] || r['startTime'] || r['Start Time'] || '').trim();
+    if (!day || !label || !time) return;
+    if (!data[day]) data[day] = [];
+    data[day].push({ slot: String(slot), label: String(label), startTime: time });
+  });
+  return data;
+}
+
+function showPreview(data) {
+  const days = Object.keys(data);
+  let html = '';
+  days.slice(0, 3).forEach(day => {
+    html += `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px">${day}</div>`;
+    html += '<table class="template-table"><thead><tr><th>Slot</th><th>Label</th><th>Start</th></tr></thead><tbody>';
+    data[day].forEach(s => {
+      html += `<tr><td>${s.slot}</td><td>${s.label}</td><td>${s.startTime}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  });
+  if (days.length > 3) html += `<div style="color:var(--text3);font-size:12px">...and ${days.length - 3} more days</div>`;
+  document.getElementById('preview-content').innerHTML = html;
+  document.getElementById('upload-preview').style.display = 'block';
+}
+
+function saveTimetable() {
+  if (!pendingData) return;
+  timetable = pendingData;
+  saveToLocal();
+  syncToCloud();
+  toast('Timetable saved!', 'success');
+  renderDashboard();
+  checkNotifications();
+  document.getElementById('upload-preview').style.display = 'none';
+}
+
+function clearTimetable() {
+  pendingData = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('file-input').value = '';
+}
+
+// ── Templates ─────────────────────────────────────────
+function downloadJSONTemplate() {
+  const template = {};
+  DAYS.forEach(day => {
+    template[day] = [
+      { slot: '1', label: 'Assembly', startTime: '08:00' },
+      { slot: '2', label: 'Period 1', startTime: '08:45' },
+      { slot: '3', label: 'Period 2', startTime: '09:30' },
+      { slot: '4', label: 'Period 3', startTime: '10:20' },
+      { slot: 'Lunch', label: 'Lunch Break', startTime: '13:00' },
+      { slot: '6', label: 'Period 5', startTime: '13:45' },
+      { slot: '7', label: 'Period 6', startTime: '14:30' },
+      { slot: '8', label: 'Period 7', startTime: '15:15' },
+      { slot: '9', label: 'Leave for home', startTime: '16:00' },
+    ];
+  });
+  const blob = new Blob([JSON.stringify(template, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'officesync-template.json';
+  a.click();
+  toast('JSON template downloaded', 'info');
+}
+
+function downloadTemplate() {
+  const rows = [];
+  DAYS.forEach(day => {
+    [
+      ['1','Assembly','08:00'],['2','Period 1','08:45'],['3','Period 2','09:30'],
+      ['4','Period 3','10:20'],['Lunch','Lunch Break','13:00'],['6','Period 5','13:45'],
+      ['7','Period 6','14:30'],['8','Period 7','15:15'],['9','Leave for home','16:00']
+    ].forEach(([slot,label,time]) => rows.push({Day:day,Slot:slot,Label:label,StartTime:time}));
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Timetable');
+  XLSX.writeFile(wb, 'officesync-template.xlsx');
+  toast('Excel template downloaded', 'info');
+}
+
+// ── Notifications ─────────────────────────────────────
+async function enableNotifications() {
+  if (!('Notification' in window)) {
+    toast('Notifications not supported in this browser', 'warning'); return;
+  }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Notifications enabled!', 'success');
+    checkNotifications();
+    registerServiceWorker();
+  } else {
+    toast('Notification permission denied', 'warning');
+  }
+}
+
+function updateNotifStatus(on) {
+  const pill = document.getElementById('notif-status');
+  const text = document.getElementById('notif-status-text');
+  pill.className = 'status-pill ' + (on ? 'on' : 'off');
+  text.textContent = on ? 'Notifications active' : 'Notifications off';
+}
+
+function checkNotifications() {
+  if (!notifEnabled || Notification.permission !== 'granted') return;
+  const day = todayName();
+  const slots = timetable[day] || [];
+  const now = nowMinutes();
+  const before = settings.notifBefore;
+
+  slots.forEach(s => {
+    const smins = timeToMinutes(s.startTime);
+    const diff = smins - now;
+    if (diff === before) {
+      sendNotification(
+        `⏰ ${s.label} in ${before} min`,
+        `Starting at ${s.startTime} — get ready!`
+      );
+    }
+    if (diff === 0) {
+      sendNotification(`📢 ${s.label} starting now!`, `It's ${s.startTime}`);
+    }
+  });
+}
+
+function sendNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(title, { body, icon: '📅', badge: '📅' });
+}
+
+function testNotification() {
+  if (Notification.permission !== 'granted') {
+    toast('Enable notifications first', 'warning'); return;
+  }
+  sendNotification('Test — OfficeSync', 'Notifications are working correctly!');
+  toast('Test notification sent', 'info');
+}
+
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+    } catch(e) { /* SW optional */ }
+  }
+}
+
+// ── Settings ──────────────────────────────────────────
+function saveSettings() {
+  settings.notifBefore = parseInt(document.getElementById('notif-before').value) || 2;
+  localStorage.setItem('officesync_settings', JSON.stringify(settings));
+  toast('Settings saved', 'success');
+}
+
+function loadSettings() {
+  const s = localStorage.getItem('officesync_settings');
+  if (s) {
+    settings = { ...settings, ...JSON.parse(s) };
+    document.getElementById('notif-before').value = settings.notifBefore;
+  }
+}
+
+// ── Local storage ─────────────────────────────────────
+function saveToLocal() {
+  localStorage.setItem('officesync_timetable', JSON.stringify(timetable));
+  document.getElementById('local-status').innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    Local: saved`;
+}
+
+function loadFromLocal() {
+  const t = localStorage.getItem('officesync_timetable');
+  if (t) {
+    try { timetable = JSON.parse(t); } catch {}
+  }
+  const n = localStorage.getItem('officesync_notif');
+  if (n === 'granted' && Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    checkInterval = setInterval(checkNotifications, 30000);
+  }
+}
+
+// ── Supabase ──────────────────────────────────────────
+function saveSupabaseConfig() {
+  supabaseConfig = {
+    url: document.getElementById('sb-url').value.trim(),
+    key: document.getElementById('sb-key').value.trim(),
+    device: document.getElementById('device-name').value.trim() || 'My Device'
+  };
+  localStorage.setItem('officesync_supabase', JSON.stringify(supabaseConfig));
+  toast('Supabase config saved', 'success');
+  updateCloudStatus('configured');
+}
+
+function loadSupabaseConfig() {
+  const s = localStorage.getItem('officesync_supabase');
+  if (s) {
+    supabaseConfig = JSON.parse(s);
+    document.getElementById('sb-url').value = supabaseConfig.url || '';
+    document.getElementById('sb-key').value = supabaseConfig.key || '';
+    document.getElementById('device-name').value = supabaseConfig.device || '';
+    if (supabaseConfig.url) updateCloudStatus('configured');
+  }
+}
+
+function updateCloudStatus(st) {
+  const el = document.getElementById('cloud-status');
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+    Cloud: ${st}`;
+}
+
+async function syncToCloud() {
+  if (!supabaseConfig.url || !supabaseConfig.key) return;
+  try {
+    const res = await fetch(`${supabaseConfig.url}/rest/v1/officesync_timetable`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseConfig.key,
+        'Authorization': `Bearer ${supabaseConfig.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        device: supabaseConfig.device || 'default',
+        data: JSON.stringify(timetable),
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (res.ok || res.status === 409 || res.status === 201) {
+      updateCloudStatus('synced ✓');
+      toast('Synced to cloud', 'success');
+    } else {
+      const err = await res.json();
+      // Table may not exist yet
+      if (err.code === '42P01') {
+        toast('Create the table first — see Settings for SQL', 'warning');
+      } else {
+        toast('Cloud sync failed: ' + (err.message || res.status), 'warning');
+      }
+    }
+  } catch(e) { toast('Cloud sync error: ' + e.message, 'warning'); }
+}
+
+async function syncFromCloud() {
+  if (!supabaseConfig.url || !supabaseConfig.key) {
+    toast('Configure Supabase first', 'warning'); return;
+  }
+  try {
+    const res = await fetch(`${supabaseConfig.url}/rest/v1/officesync_timetable?device=eq.${encodeURIComponent(supabaseConfig.device || 'default')}&select=data,updated_at&order=updated_at.desc&limit=1`, {
+      headers: {
+        'apikey': supabaseConfig.key,
+        'Authorization': `Bearer ${supabaseConfig.key}`
+      }
+    });
+    const rows = await res.json();
+    if (rows.length) {
+      timetable = JSON.parse(rows[0].data);
+      saveToLocal();
+      renderDashboard();
+      toast('Pulled from cloud (' + rows[0].updated_at.slice(0,10) + ')', 'success');
+    } else {
+      toast('No data found in cloud for this device', 'warning');
+    }
+  } catch(e) { toast('Pull failed: ' + e.message, 'warning'); }
+}
+
+// ── Clear all ─────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Clear all local data? This cannot be undone.')) return;
+  localStorage.clear();
+  timetable = {};
+  pendingData = null;
+  notifEnabled = false;
+  updateNotifStatus(false);
+  renderDashboard();
+  toast('All data cleared', 'warning');
+}
+
+// ── Toast ─────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Start ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
