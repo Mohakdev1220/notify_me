@@ -295,7 +295,6 @@ const CONFIG = {
   supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',   // e.g. https://abcxyz.supabase.co
   supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',   // anon/public key
   device:       'smartboard',  // device name in Supabase row
-  notifBefore:  2,    // minutes before slot to notify
   pollInterval: 5000, // ms — how often to check Supabase
 };
 // ── END CONFIG ──────────────────────────────────────────────────────────
@@ -310,18 +309,24 @@ const params = new URLSearchParams(location.search);
 if (params.get('url')) CONFIG.supabaseUrl = params.get('url');
 if (params.get('key')) CONFIG.supabaseKey = params.get('key');
 if (params.get('device')) CONFIG.device = params.get('device');
-if (params.get('before')) CONFIG.notifBefore = parseInt(params.get('before'));
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
 function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
 function todayName() { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; }
 
+// Formats minutes from midnight into an standard HH:MM string matching your data format
+function minsToTimeString(totalMins) {
+  const h = Math.floor(totalMins / 60).toString().padStart(2, '0');
+  const m = (totalMins % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
 // ── Boot ───────────────────────────────────────────────────────────────
 async function init() {
   updateClock();
   setInterval(updateClock, 1000);
-  setInterval(tick, 30000);
+  setInterval(tick, 30000); // Checks every 30 seconds
 
   // Load cached timetable
   const cached = localStorage.getItem('os_tt');
@@ -391,25 +396,49 @@ async function fetchData() {
 function tick() {
   renderTimeline();
   if (!notifEnabled) return;
+  
   const slots = timetable[todayName()] || [];
   const now = nowMins();
+  const currentTimeString = minsToTimeString(now);
+
   slots.forEach(s => {
-    const diff = toMins(s.startTime) - now;
-    if (diff === CONFIG.notifBefore) {
-      const msg = s.notificationMessage || (s.label + ' in ' + CONFIG.notifBefore + ' min');
-      fire('⏰ ' + msg, 'Starts at ' + s.startTime, s.startTime + '-pre');
+    // 1. Check for nested custom array alerts (5-min and 2-min warning rules)
+    if (s.alerts && Array.isArray(s.alerts)) {
+      s.alerts.forEach(alert => {
+        if (alert.triggerTime === currentTimeString) {
+          const uniqueKey = `${s.startTime}-${alert.triggerTime}`;
+          fire('⏰ ' + s.notificationMessage, `Starts at ${s.startTime}`, uniqueKey, alert.duration);
+        }
+      });
     }
+
+    // 2. Fallback: Check if period is starting right now (Diff === 0)
+    const diff = toMins(s.startTime) - now;
     if (diff === 0) {
-      const msg2 = s.notificationMessage ? s.notificationMessage.replace('Next period', 'NOW') : (s.label + ' — starting now!');
-      fire('📢 ' + msg2, "It's " + s.startTime, s.startTime + '-now');
+      const msgNow = s.notificationMessage ? s.notificationMessage.replace('Next period', 'NOW') : (s.label + ' — starting now!');
+      // Class start notifications stay up for a standard 10 seconds
+      fire('📢 ' + msgNow, "It's " + s.startTime, s.startTime + '-now', 10);
     }
   });
 }
 
-function fire(title, body, key) {
+function fire(title, body, key, durationSeconds) {
   if (lastFiredKey === key) return;
   lastFiredKey = key;
-  new Notification(title, { body, icon: './icon.png', tag: key, requireInteraction: false });
+  
+  const notif = new Notification(title, { 
+    body, 
+    icon: './icon.png', 
+    tag: key, 
+    requireInteraction: false 
+  });
+
+  // Automatically dismiss the notification window after your explicit timing window expires
+  if (durationSeconds) {
+    setTimeout(() => {
+      notif.close();
+    }, durationSeconds * 1000);
+  }
 }
 
 // ── Render timeline ────────────────────────────────────────────────────
