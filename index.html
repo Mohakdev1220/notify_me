@@ -402,15 +402,17 @@ function tick() {
   const currentTimeString = minsToTimeString(now);
 
   slots.forEach(s => {
-    // 1. Check for nested custom array alerts (5-min and 2-min warning rules)
+   // 1. Check for nested custom array alerts (5-min and 2-min warning rules)
     if (s.alerts && Array.isArray(s.alerts)) {
       s.alerts.forEach(alert => {
         if (alert.triggerTime === currentTimeString) {
-          const uniqueKey = `${s.startTime}-${alert.triggerTime}`;
+          // Use the new unique ID from the JSON as the key
+          const uniqueKey = alert.id ? alert.id.toString() : `${s.startTime}-${alert.triggerTime}`;
           fire('⏰ ' + s.notificationMessage, `Starts at ${s.startTime}`, uniqueKey, alert.duration);
         }
       });
     }
+
 
     // 2. Fallback: Check if period is starting right now (Diff === 0)
     const diff = toMins(s.startTime) - now;
