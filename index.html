@@ -289,13 +289,11 @@
 
 <script>
 // ── CONFIG — paste your Supabase details here ──────────────────────────
-// You can also set these via URL params:
-// ?url=https://xxx.supabase.co&key=eyJ...&device=smartboard
 const CONFIG = {
-  supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',   // e.g. https://abcxyz.supabase.co
-  supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',   // anon/public key
-  device:       'smartboard',  // device name in Supabase row
-  pollInterval: 5000, // ms — how often to check Supabase
+  supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',
+  supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',
+  device:       'smartboard',
+  pollInterval: 5000,
 };
 // ── END CONFIG ──────────────────────────────────────────────────────────
 
@@ -306,16 +304,15 @@ let pollTimer = null;
 
 // Read URL params (override CONFIG)
 const params = new URLSearchParams(location.search);
-if (params.get('url')) CONFIG.supabaseUrl = params.get('url');
-if (params.get('key')) CONFIG.supabaseKey = params.get('key');
-if (params.get('device')) CONFIG.device = params.get('device');
+if (params.get('url'))    CONFIG.supabaseUrl  = params.get('url');
+if (params.get('key'))    CONFIG.supabaseKey  = params.get('key');
+if (params.get('device')) CONFIG.device       = params.get('device');
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function toMins(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
 function nowMins() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
 function todayName() { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; }
 
-// Formats minutes from midnight into an standard HH:MM string matching your data format
 function minsToTimeString(totalMins) {
   const h = Math.floor(totalMins / 60).toString().padStart(2, '0');
   const m = (totalMins % 60).toString().padStart(2, '0');
@@ -326,11 +323,11 @@ function minsToTimeString(totalMins) {
 async function init() {
   updateClock();
   setInterval(updateClock, 1000);
-  setInterval(tick, 30000); // Checks every 30 seconds
+  setInterval(tick, 30000);
 
   // Load cached timetable
   const cached = localStorage.getItem('os_tt');
-  if (cached) { try { timetable = JSON.parse(cached); renderTimeline(); } catch {} }
+  if (cached) { try { timetable = JSON.parse(cached); renderTimeline(); } catch(e) {} }
 
   // Check notification permission
   if (Notification.permission === 'granted') {
@@ -378,7 +375,7 @@ async function fetchData() {
       return;
     }
     const newStr = rows[0].data;
-    const newTT = JSON.parse(newStr);
+    const newTT  = JSON.parse(newStr);
     const changed = JSON.stringify(newTT) !== JSON.stringify(timetable);
     timetable = newTT;
     localStorage.setItem('os_tt', newStr);
@@ -396,67 +393,56 @@ async function fetchData() {
 function tick() {
   renderTimeline();
   if (!notifEnabled) return;
-  
+
   const slots = timetable[todayName()] || [];
   const now = nowMins();
   const currentTimeString = minsToTimeString(now);
 
   slots.forEach(s => {
-   // 1. Check for nested custom array alerts (5-min and 2-min warning rules)
+    // 1. Check for nested custom array alerts (5-min and 2-min warning rules)
     if (s.alerts && Array.isArray(s.alerts)) {
       s.alerts.forEach(alert => {
         if (alert.triggerTime === currentTimeString) {
-          // Use the new unique ID from the JSON as the key
           const uniqueKey = alert.id ? alert.id.toString() : `${s.startTime}-${alert.triggerTime}`;
           fire('⏰ ' + s.notificationMessage, `Starts at ${s.startTime}`, uniqueKey, alert.duration);
         }
       });
     }
 
-
-    // 2. Fallback: Check if period is starting right now (Diff === 0)
+    // 2. Fallback: Check if period is starting right now (diff === 0)
     const diff = toMins(s.startTime) - now;
     if (diff === 0) {
-      const msgNow = s.notificationMessage ? s.notificationMessage.replace('Next period', 'NOW') : (s.label + ' — starting now!');
-      // Class start notifications stay up for a standard 10 seconds
+      const msgNow = s.notificationMessage
+        ? s.notificationMessage.replace('Next period', 'NOW')
+        : (s.label + ' — starting now!');
       fire('📢 ' + msgNow, "It's " + s.startTime, s.startTime + '-now', 10);
     }
   });
 }
 
+// ── Fire notification ──────────────────────────────────────────────────
 function fire(title, body, key, durationSeconds) {
   if (lastFiredKey === key) return;
   lastFiredKey = key;
-  
-  const notif = new Notification(title, { 
-     body, 
-     icon: 'icon.png', 
-     tag: key, 
-     requireInteraction: true // <-- CHANGE THIS TO TRUE
-   });
-}
 
-  // Automatically dismiss the notification window after your explicit timing window expires
-  if (durationSeconds) {
-    setTimeout(() => {
-      notif.close();
-    }, durationSeconds * 1000);
-  }
-}
+  const notif = new Notification(title, {
+    body,
+    icon: 'icon.png',
+    tag: key,
+    requireInteraction: true
+  });
 
-  // Automatically dismiss the notification window after your explicit timing window expires
+  // Auto-dismiss after durationSeconds if provided
   if (durationSeconds) {
-    setTimeout(() => {
-      notif.close();
-    }, durationSeconds * 1000);
+    setTimeout(() => notif.close(), durationSeconds * 1000);
   }
 }
 
 // ── Render timeline ────────────────────────────────────────────────────
 function renderTimeline() {
-  const day = todayName();
+  const day   = todayName();
   const slots = timetable[day] || [];
-  const now = nowMins();
+  const now   = nowMins();
 
   document.getElementById('timeline-title').textContent = `${day}'s schedule`;
 
@@ -482,14 +468,14 @@ function renderTimeline() {
 
   // Timeline rows
   document.getElementById('timeline').innerHTML = slots.map(s => {
-    const smins = toMins(s.startTime);
-    const isNow = smins <= now && smins > now - 45;
+    const smins  = toMins(s.startTime);
+    const isNow  = smins <= now && smins > now - 45;
     const isNext = nextSlot && s.startTime === nextSlot.startTime;
     const isDone = smins < now && !isNow;
-    const cls = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
-    const badge = isNow ? '<span class="badge badge-now">Now</span>'
-                : isNext ? '<span class="badge badge-next">Next</span>'
-                : isDone ? '<span class="badge badge-done">Done</span>' : '';
+    const cls    = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
+    const badge  = isNow  ? '<span class="badge badge-now">Now</span>'
+                 : isNext ? '<span class="badge badge-next">Next</span>'
+                 : isDone ? '<span class="badge badge-done">Done</span>' : '';
     return `<div class="slot ${cls}">
       <span class="slot-time">${s.startTime}</span>
       <span class="slot-name">${s.label}</span>
@@ -540,7 +526,7 @@ function setStatus(id, dotColor, text, textColor) {
   const val = document.getElementById('val-' + id);
   dot.className = 'dot ' + dotColor;
   val.textContent = text;
-  val.className = 'status-val ' + (textColor || '');
+  val.className   = 'status-val ' + (textColor || '');
 }
 
 function toast(msg, type='i') {
