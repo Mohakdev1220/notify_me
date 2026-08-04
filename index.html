@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OfficeSync</title>
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --surface: #141722;
+      --surface2: #1e2235;
+      --border: #2a2f45;
+      --text: #f0f2f8;
+      --text2: #949bb4;
+      --text3: #5c6380;
+      --accent: #6366f1;
+      --accent-bg: rgba(99, 102, 241, 0.12);
+      --accent-dim: #4338ca;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .app { width: 100%; max-width: 520px; }
+
+    .download-banner {
+      width: 100%;
+      max-width: 520px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      transition: all 0.2s ease;
+    }
+    .download-banner:hover { background: var(--surface2); transform: translateY(-1px); }
+
+    .header { text-align: center; margin-bottom: 24px; }
+    .logo { font-size: 44px; margin-bottom: 8px; line-height: 1; }
+    .title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .title span { color: var(--accent); }
+    .subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+    .enable-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    }
+    .enable-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+    .enable-btn:disabled { 
+      background: var(--success-bg); 
+      color: var(--success); 
+      border: 1px solid var(--success);
+      cursor: default; 
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .status-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .status-row:first-child { padding-top: 0; }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot.green { background: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
+    .dot.yellow { background: var(--warning); }
+    .dot.red { background: var(--danger); }
+    .dot.grey { background: var(--text3); }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .status-label { color: var(--text2); flex: 1; }
+    .status-val { font-weight: 600; }
+    .status-val.green { color: var(--success); }
+    .status-val.yellow { color: var(--warning); }
+    .status-val.red { color: var(--danger); }
+
+    .next-card {
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-dim);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      display: none;
+    }
+    .next-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+    .next-label { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .next-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .next-time { font-size: 13px; color: var(--text2); }
+    .next-countdown { font-size: 28px; font-weight: 800; color: var(--accent); margin-top: 8px; font-variant-numeric: tabular-nums; }
+
+    .timeline-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .timeline-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    .slot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+      margin-bottom: 4px;
+    }
+    .slot.done { opacity: 0.4; }
+    .slot.is-next { background: var(--accent-bg); border: 1px solid rgba(99, 102, 241, 0.2); }
+    .slot.is-now { background: var(--success-bg); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .slot-time { font-size: 12px; font-weight: 700; color: var(--text3); width: 48px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .slot.is-next .slot-time { color: var(--accent); }
+    .slot.is-now .slot-time { color: var(--success); }
+    .slot-name { font-size: 14px; flex: 1; font-weight: 500; }
+    .slot.is-now .slot-name { color: var(--success); font-weight: 600; }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-now { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-next { background: rgba(99, 102, 241, 0.2); color: var(--accent); }
+    .badge-done { background: var(--surface2); color: var(--text3); }
+
+    .clock { text-align: center; font-size: 13px; color: var(--text3); margin-top: 12px; }
+    .clock span { color: var(--text2); font-weight: 600; }
+
+    .empty { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
+
+    #toasts {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 999;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      animation: slideIn 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.s { border-left: 4px solid var(--success); }
+    .toast.w { border-left: 4px solid var(--warning); }
+    .toast.i { border-left: 4px solid var(--accent); }
+    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <a href="https://www.mediafire.com/file/xu2yyvkichb1kxq/electron.exe/file" class="download-banner">
+    <span>⬇️</span> Download OfficeSync Desktop App
+  </a>
+
+  <div class="app">
+    <div class="header">
+      <div class="logo">📅</div>
+      <div class="title">Office<span>Sync</span></div>
+      <div class="subtitle" id="date-label">Loading...</div>
+    </div>
+
+    <button class="enable-btn" id="enable-btn" onclick="enableNotifications()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="enable-btn-text">Enable Audio & Notifications</span>
+    </button>
+
+    <div class="status-card">
+      <div class="status-row">
+        <div class="dot grey" id="dot-notif"></div>
+        <span class="status-label">Notifications</span>
+        <span class="status-val" id="val-notif">Off</span>
+      </div>
+      <div class="status-row">
+        <div class="dot grey" id="dot-sync"></div>
+        <span class="status-label">Supabase Sync</span>
+        <span class="status-val" id="val-sync">Not configured</span>
+      </div>
+      <div class="status-row">
+        <div class="dot grey" id="dot-data"></div>
+        <span class="status-label">Timetable</span>
+        <span class="status-val" id="val-data">No data</span>
+      </div>
+    </div>
+
+    <div class="next-card" id="next-card">
+      <div class="next-label">⏰ Up Next</div>
+      <div class="next-name" id="next-name">—</div>
+      <div class="next-time" id="next-time-label">—</div>
+      <div class="next-countdown" id="next-countdown">—</div>
+    </div>
+
+    <div class="timeline-card">
+      <div class="timeline-title" id="timeline-title">Today's schedule</div>
+      <div id="timeline"><div class="empty">No timetable loaded yet</div></div>
+    </div>
+
+    <div class="clock">Current Time: <span id="clock">—</span></div>
+  </div>
+
+  <div id="toasts"></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+const CONFIG = {
+  supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',
+  supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',
+  device:       'smartboard',
+  pollInterval: 5000,
+};
+
+// URL Parameters Override
+const params = new URLSearchParams(location.search);
+if (params.get('url'))    CONFIG.supabaseUrl  = params.get('url');
+if (params.get('key'))    CONFIG.supabaseKey  = params.get('key');
+if (params.get('device')) CONFIG.device       = params.get('device');
+
+// ── GLOBAL STATE ───────────────────────────────────────────────────────
+let timetable = {};
+let notifEnabled = false;
+let lastFiredKey = '';
+let pollTimer = null;
+let audioCtx = null;
+let swRegistration = null;
+
+// ── AUDIO ENGINE ──────────────────────────────────────────────────────
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playSound() {
+  initAudio();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'sine';
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  // Sound sequence: 880Hz (A5) -> 1320Hz (E6)
+  osc.frequency.setValueAtTime(880, now);
+  osc.frequency.setValueAtTime(1320, now + 0.12);
+
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+  osc.start(now);
+  osc.stop(now + 0.6);
+}
+
+// ── TIME UTILITIES ────────────────────────────────────────────────────
+function toMins(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
+function nowMins() { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
+function todayName() { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; }
+
+function minsToTimeString(totalMins) {
+  const h = Math.floor(totalMins / 60).toString().padStart(2, '0');
+  const m = (totalMins % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+
+// ── INITIALIZATION ─────────────────────────────────────────────────────
+async function init() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(tick, 1000); // 1s tick for precise state evaluation
+
+  // Global user interaction handler for Web Audio context unlocking
+  document.body.addEventListener('click', initAudio, { once: true });
+
+  // Load cached timetable
+  const cached = localStorage.getItem('os_tt');
+  if (cached) { 
+    try { 
+      timetable = JSON.parse(cached); 
+      renderTimeline(); 
+    } catch(e) {} 
+  }
+
+  // Register Service Worker
+  await registerSW();
+
+  // Check initial notification status
+  if (Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+  }
+
+  // Start polling backend
+  if (CONFIG.supabaseUrl && CONFIG.supabaseKey) {
+    startPolling();
+  } else {
+    setStatus('sync', 'grey', 'Not configured', '');
+  }
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  document.getElementById('date-label').textContent =
+    now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// ── SUPABASE SYNC ──────────────────────────────────────────────────────
+function startPolling() {
+  setStatus('sync', 'yellow', 'Connecting...', '');
+  fetchData();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(fetchData, CONFIG.pollInterval);
+}
+
+async function fetchData() {
+  try {
+    const url = `${CONFIG.supabaseUrl}/rest/v1/officesync_timetable?device=eq.${encodeURIComponent(CONFIG.device)}&select=data,updated_at&order=updated_at.desc&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'apikey': CONFIG.supabaseKey, 'Authorization': `Bearer ${CONFIG.supabaseKey}` }
+    });
+    
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    
+    if (!rows.length) {
+      setStatus('sync', 'yellow', 'Connected — no data', '');
+      setStatus('data', 'grey', 'No row found', '');
+      return;
+    }
+
+    const newStr = rows[0].data;
+    const newTT  = JSON.parse(newStr);
+    const changed = JSON.stringify(newTT) !== JSON.stringify(timetable);
+    
+    timetable = newTT;
+    localStorage.setItem('os_tt', newStr);
+    
+    setStatus('sync', 'green', 'Live ✓', 'green');
+    const days = Object.keys(timetable).length;
+    setStatus('data', 'green', `${days} days loaded`, 'green');
+    
+    if (changed) { 
+      renderTimeline(); 
+      toast('Timetable updated', 's'); 
+    }
+  } catch(e) {
+    setStatus('sync', 'red', 'Error — retrying', 'red');
+  }
+}
+
+// ── LOGIC TICK & SCHEDULER ─────────────────────────────────────────────
+function tick() {
+  renderTimeline();
+  if (!notifEnabled) return;
+
+  const slots = timetable[todayName()] || [];
+  const now = nowMins();
+  const currentTimeString = minsToTimeString(now);
+
+  slots.forEach(s => {
+    // Alert schedule triggers
+    if (s.alerts && Array.isArray(s.alerts)) {
+      s.alerts.forEach(alert => {
+        if (alert.triggerTime === currentTimeString) {
+          const uniqueKey = alert.id ? alert.id.toString() : `${s.startTime}-${alert.triggerTime}`;
+          fire('⏰ ' + s.notificationMessage, `Starts at ${s.startTime}`, uniqueKey, alert.duration);
+        }
+      });
+    }
+
+    // Exact period start trigger
+    const diff = toMins(s.startTime) - now;
+    if (diff === 0) {
+      const msgNow = s.notificationMessage
+        ? s.notificationMessage.replace('Next period', 'NOW')
+        : (s.label + ' starting now!');
+      fire('📢 ' + msgNow, `Scheduled time: ${s.startTime}`, `${s.startTime}-now`, 10);
+    }
+  });
+}
+
+// ── DISPATCH NOTIFICATIONS ──────────────────────────────────────────────
+function fire(title, body, key, durationSeconds) {
+  if (lastFiredKey === key) return;
+  lastFiredKey = key;
+
+  // Sound cue
+  playSound();
+
+  // Unified Notification Execution (SW Priority)
+  if (swRegistration && 'showNotification' in swRegistration) {
+    swRegistration.showNotification(title, {
+      body: body,
+      icon: 'icon.png',
+      badge: 'icon.png',
+      tag: key,
+      requireInteraction: true
+    });
+  } else if (Notification.permission === 'granted') {
+    const notif = new Notification(title, {
+      body: body,
+      icon: 'icon.png',
+      tag: key,
+      requireInteraction: true
+    });
+    if (durationSeconds) {
+      setTimeout(() => notif.close(), durationSeconds * 1000);
+    }
+  }
+}
+
+// ── UI TIMELINE RENDERER ───────────────────────────────────────────────
+function renderTimeline() {
+  const day = todayName();
+  const slots = timetable[day] || [];
+  const now = nowMins();
+
+  document.getElementById('timeline-title').textContent = `${day}'s schedule`;
+
+  if (!slots.length) {
+    document.getElementById('timeline').innerHTML = `<div class="empty">No slots found for ${day}</div>`;
+    document.getElementById('next-card').style.display = 'none';
+    return;
+  }
+
+  const nextSlot = slots.find(s => toMins(s.startTime) > now);
+
+  // Up Next Card
+  const nc = document.getElementById('next-card');
+  if (nextSlot) {
+    nc.style.display = 'block';
+    document.getElementById('next-name').textContent = nextSlot.label;
+    const diff = toMins(nextSlot.startTime) - now;
+    document.getElementById('next-time-label').textContent = `Starts at ${nextSlot.startTime}`;
+    document.getElementById('next-countdown').textContent = diff === 1 ? '1 min away' : `${diff} mins away`;
+  } else {
+    nc.style.display = 'none';
+  }
+
+  // Schedule Rows
+  document.getElementById('timeline').innerHTML = slots.map((s, idx) => {
+    const smins = toMins(s.startTime);
+    
+    // Duration estimation logic
+    let duration = 45; 
+    if (slots[idx + 1]) {
+      duration = toMins(slots[idx + 1].startTime) - smins;
+    }
+
+    const isNow = smins <= now && now < (smins + duration);
+    const isNext = nextSlot && s.startTime === nextSlot.startTime;
+    const isDone = smins + duration <= now;
+
+    const cls = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
+    const badge = isNow  ? '<span class="badge badge-now">Now</span>'
+                : isNext ? '<span class="badge badge-next">Next</span>'
+                : isDone ? '<span class="badge badge-done">Done</span>' : '';
+
+    return `
+      <div class="slot ${cls}">
+        <span class="slot-time">${s.startTime}</span>
+        <span class="slot-name">${s.label}</span>
+        ${badge}
+      </div>
+    `;
+  }).join('');
+}
+
+// ── NOTIFICATION & SERVICE WORKER HANDLERS ────────────────────────────
+async function enableNotifications() {
+  initAudio();
+  
+  if (Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Notifications & Audio active', 's');
+    playSound();
+    return;
+  }
+
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Notifications enabled! ✓', 's');
+    playSound();
+    tick();
+  } else {
+    toast('Permission denied', 'w');
+  }
+}
+
+function updateNotifStatus(on) {
+  setStatus('notif', on ? 'green' : 'grey', on ? 'Active ✓' : 'Off', on ? 'green' : '');
+  const btn = document.getElementById('enable-btn');
+  const txt = document.getElementById('enable-btn-text');
+  if (on) {
+    btn.disabled = true;
+    txt.textContent = '✓ Notifications & Audio Active';
+  }
+}
+
+async function registerSW() {
+  if ('serviceWorker' in navigator) {
+    try { 
+      swRegistration = await navigator.serviceWorker.register('./sw.js'); 
+    } catch(e) {}
+  }
+}
+
+// ── AUXILIARY UI HELPERS ───────────────────────────────────────────────
+function setStatus(id, dotColor, text, textColor) {
+  const dot = document.getElementById('dot-' + id);
+  const val = document.getElementById('val-' + id);
+  if (dot) dot.className = 'dot ' + dotColor;
+  if (val) {
+    val.textContent = text;
+    val.className   = 'status-val ' + (textColor || '');
+  }
+}
+
+function toast(msg, type = 'i') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// Execute Entrypoint
+init();
+</script>
+</body>
+</html>
