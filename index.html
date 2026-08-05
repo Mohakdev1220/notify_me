@@ -1,283 +1,423 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OfficeSync</title>
-  <style>
-    :root {
-      --bg: #0b0d14;
-      --surface: #141722;
-      --surface2: #1e2235;
-      --border: #2a2f45;
-      --text: #f0f2f8;
-      --text2: #949bb4;
-      --text3: #5c6380;
-      --accent: #6366f1;
-      --accent-bg: rgba(99, 102, 241, 0.12);
-      --accent-dim: #4338ca;
-      --success: #10b981;
-      --success-bg: rgba(16, 185, 129, 0.12);
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --radius: 16px;
-      --radius-sm: 10px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OfficeSync</title>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #141a27;
+    --surface2: #1f2535;
+    --surface3: #28304a;
+    --border: #2a3248;
+    --text: #ecf0f8;
+    --text2: #9ca3b8;
+    --text3: #6b7280;
+    --accent: #5b9cff;
+    --accent-light: #7aafff;
+    --accent-dark: #4a8be8;
+    --accent-bg: #162344;
+    --success: #4ade80;
+    --success-bg: #0d2e1a;
+    --warning: #f59e0b;
+    --danger: #f87171;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 0.2s cubic-bezier(0.2, 0, 0.38, 0.9);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  .app { width: 100%; max-width: 540px; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  
+  .title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+    letter-spacing: 0.3px;
+  }
 
-    .app { width: 100%; max-width: 520px; }
+  /* Download button */
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all var(--transition);
+    margin-bottom: 24px;
+  }
+  .download-btn:hover { 
+    background: var(--surface3);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
 
-    .download-banner {
-      width: 100%;
-      max-width: 520px;
-      padding: 12px 20px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 20px;
-      transition: all 0.2s ease;
-    }
-    .download-banner:hover { background: var(--surface2); transform: translateY(-1px); }
+  /* Enable button */
+  .enable-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .enable-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  
+  .enable-btn:hover:not(:disabled) { 
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(91, 156, 255, 0.25);
+  }
+  .enable-btn:disabled { 
+    background: var(--success);
+    cursor: default;
+    opacity: 0.9;
+  }
+  .enable-btn svg { width: 20px; height: 20px; position: relative; z-index: 1; }
+  .enable-btn span { position: relative; z-index: 1; }
 
-    .header { text-align: center; margin-bottom: 24px; }
-    .logo { font-size: 44px; margin-bottom: 8px; line-height: 1; }
-    .title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .title span { color: var(--accent); }
-    .subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  /* Status card */
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s var(--transition);
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-    .enable-btn {
-      width: 100%;
-      padding: 16px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.2s;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
-    }
-    .enable-btn:hover { background: #4f46e5; transform: translateY(-1px); }
-    .enable-btn:disabled { 
-      background: var(--success-bg); 
-      color: var(--success); 
-      border: 1px solid var(--success);
-      cursor: default; 
-      transform: none;
-      box-shadow: none;
-    }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .status-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .status-row:first-child { padding-top: 0; }
 
-    .status-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 16px;
-    }
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-    }
-    .status-row:last-child { border-bottom: none; padding-bottom: 0; }
-    .status-row:first-child { padding-top: 0; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all var(--transition);
+  }
+  .dot.green { background: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 2s ease-in-out infinite; }
+  .dot.yellow { background: var(--warning); box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+  .dot.red { background: var(--danger); box-shadow: 0 0 6px rgba(248, 113, 113, 0.4); }
+  .dot.grey { background: var(--text3); }
 
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .dot.green { background: var(--success); box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
-    .dot.yellow { background: var(--warning); }
-    .dot.red { background: var(--danger); }
-    .dot.grey { background: var(--text3); }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.2)} }
 
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .status-label { color: var(--text2); flex: 1; font-weight: 500; }
+  .status-val { font-weight: 600; font-size: 12px; }
+  .status-val.green { color: var(--success); }
+  .status-val.yellow { color: var(--warning); }
+  .status-val.red { color: var(--danger); }
 
-    .status-label { color: var(--text2); flex: 1; }
-    .status-val { font-weight: 600; }
-    .status-val.green { color: var(--success); }
-    .status-val.yellow { color: var(--warning); }
-    .status-val.red { color: var(--danger); }
+  /* Sound indicator */
+  .sound-indicator {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    animation: soundPulse 0.6s ease-out;
+  }
+  .sound-indicator.muted { opacity: 0.3; }
+  @keyframes soundPulse { 0% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-    .next-card {
-      background: var(--accent-bg);
-      border: 1px solid var(--accent-dim);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-      display: none;
-    }
-    .next-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      background: var(--accent);
-    }
-    .next-label { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-    .next-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    .next-time { font-size: 13px; color: var(--text2); }
-    .next-countdown { font-size: 28px; font-weight: 800; color: var(--accent); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  /* Next up card */
+  .next-card {
+    background: linear-gradient(135deg, var(--accent-bg) 0%, var(--surface2) 100%);
+    border: 1px solid var(--accent-dark);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+    animation: slideUp 0.5s var(--transition);
+  }
+  .next-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+  .next-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(91, 156, 255, 0.1), transparent);
+  }
+  
+  .next-label { 
+    font-size: 10px; font-weight: 700; color: var(--accent);
+    letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px;
+    position: relative; z-index: 1;
+  }
+  .next-name { 
+    font-size: 24px; font-weight: 700; margin-bottom: 6px;
+    position: relative; z-index: 1;
+  }
+  .next-time { 
+    font-size: 13px; color: var(--text2);
+    position: relative; z-index: 1;
+  }
+  .next-countdown { 
+    font-size: 36px; font-weight: 800; color: var(--accent-light);
+    margin-top: 12px; letter-spacing: -1.5px;
+    position: relative; z-index: 1;
+  }
 
-    .timeline-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .timeline-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 14px;
-    }
-    .slot {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      transition: background 0.15s;
-      margin-bottom: 4px;
-    }
-    .slot.done { opacity: 0.4; }
-    .slot.is-next { background: var(--accent-bg); border: 1px solid rgba(99, 102, 241, 0.2); }
-    .slot.is-now { background: var(--success-bg); border: 1px solid rgba(16, 185, 129, 0.2); }
-    .slot-time { font-size: 12px; font-weight: 700; color: var(--text3); width: 48px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
-    .slot.is-next .slot-time { color: var(--accent); }
-    .slot.is-now .slot-time { color: var(--success); }
-    .slot-name { font-size: 14px; flex: 1; font-weight: 500; }
-    .slot.is-now .slot-name { color: var(--success); font-weight: 600; }
+  /* Timeline */
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    animation: slideUp 0.5s var(--transition);
+  }
+  .timeline-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  .slot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .slot:hover { background: rgba(91, 156, 255, 0.05); }
+  .slot.done { opacity: 0.35; }
+  .slot.is-next { background: var(--accent-bg); border-left: 3px solid var(--accent); padding-left: 9px; }
+  .slot.is-now { 
+    background: var(--success-bg);
+    border-left: 3px solid var(--success);
+    padding-left: 9px;
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.15);
+  }
+  
+  .slot-time { 
+    font-size: 12px; font-weight: 700; color: var(--text3);
+    width: 48px; flex-shrink: 0; font-variant-numeric: tabular-nums;
+  }
+  .slot.is-next .slot-time { color: var(--accent); }
+  .slot.is-now .slot-time { color: var(--success); font-weight: 800; }
+  .slot-name { font-size: 13px; flex: 1; font-weight: 500; }
+  .slot.is-now .slot-name { color: var(--success); font-weight: 600; }
+  
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+  }
+  .badge-now { background: var(--success); color: #000; }
+  .badge-next { background: var(--accent); color: #fff; }
+  .badge-done { background: var(--text3); color: var(--bg); }
 
-    .badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .badge-now { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-    .badge-next { background: rgba(99, 102, 241, 0.2); color: var(--accent); }
-    .badge-done { background: var(--surface2); color: var(--text3); }
+  /* Clock */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .clock-time { color: var(--accent-light); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
 
-    .clock { text-align: center; font-size: 13px; color: var(--text3); margin-top: 12px; }
-    .clock span { color: var(--text2); font-weight: 600; }
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
 
-    .empty { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
+  /* Toasts */
+  #toasts {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 999;
+  }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 12px;
+    animation: slideIn 0.3s var(--transition);
+    max-width: 280px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.s { border-left: 3px solid var(--success); }
+  .toast.w { border-left: 3px solid var(--warning); }
+  .toast.i { border-left: 3px solid var(--accent); }
+  .toast-icon { font-size: 14px; }
+  
+  @keyframes slideIn { 
+    from { transform: translateX(24px) translateY(12px); opacity: 0; } 
+    to { transform: translateX(0) translateY(0); opacity: 1; } 
+  }
 
-    #toasts {
-      position: fixed;
-      bottom: 20px; right: 20px;
-      display: flex; flex-direction: column; gap: 8px;
-      z-index: 999;
-    }
-    .toast {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      font-size: 13px;
-      animation: slideIn 0.2s ease;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-    .toast.s { border-left: 4px solid var(--success); }
-    .toast.w { border-left: 4px solid var(--warning); }
-    .toast.i { border-left: 4px solid var(--accent); }
-    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-  </style>
+  /* Responsive */
+  @media (max-width: 600px) {
+    .app { max-width: 100%; }
+    .title { font-size: 24px; }
+    .next-countdown { font-size: 28px; }
+    .slot { padding: 10px 10px; }
+    #toasts { bottom: 16px; right: 16px; left: 16px; }
+    .toast { max-width: 100%; }
+  }
+</style>
 </head>
 <body>
 
-  <a href="https://www.mediafire.com/file/xu2yyvkichb1kxq/electron.exe/file" class="download-banner">
-    <span>⬇️</span> Download OfficeSync Desktop App
-  </a>
+<a href="https://www.mediafire.com/file/xu2yyvkichb1kxq/electron.exe/file" class="download-btn">
+  ⬇️ Download OfficeSync Desktop
+</a>
 
-  <div class="app">
-    <div class="header">
-      <div class="logo">📅</div>
-      <div class="title">Office<span>Sync</span></div>
-      <div class="subtitle" id="date-label">Loading...</div>
-    </div>
+<div class="app">
 
-    <button class="enable-btn" id="enable-btn" onclick="enableNotifications()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span id="enable-btn-text">Enable Audio & Notifications</span>
-    </button>
-
-    <div class="status-card">
-      <div class="status-row">
-        <div class="dot grey" id="dot-notif"></div>
-        <span class="status-label">Notifications</span>
-        <span class="status-val" id="val-notif">Off</span>
-      </div>
-      <div class="status-row">
-        <div class="dot grey" id="dot-sync"></div>
-        <span class="status-label">Supabase Sync</span>
-        <span class="status-val" id="val-sync">Not configured</span>
-      </div>
-      <div class="status-row">
-        <div class="dot grey" id="dot-data"></div>
-        <span class="status-label">Timetable</span>
-        <span class="status-val" id="val-data">No data</span>
-      </div>
-    </div>
-
-    <div class="next-card" id="next-card">
-      <div class="next-label">⏰ Up Next</div>
-      <div class="next-name" id="next-name">—</div>
-      <div class="next-time" id="next-time-label">—</div>
-      <div class="next-countdown" id="next-countdown">—</div>
-    </div>
-
-    <div class="timeline-card">
-      <div class="timeline-title" id="timeline-title">Today's schedule</div>
-      <div id="timeline"><div class="empty">No timetable loaded yet</div></div>
-    </div>
-
-    <div class="clock">Current Time: <span id="clock">—</span></div>
+  <!-- Header -->
+  <div class="header">
+    <span class="logo">📅</span>
+    <div class="title">Office<span style="background:none; -webkit-text-fill-color: var(--accent); color: var(--accent);">Sync</span></div>
+    <div class="subtitle" id="date-label">Loading...</div>
   </div>
 
-  <div id="toasts"></div>
+  <!-- Enable button -->
+  <button class="enable-btn" id="enable-btn" onclick="handleEnableNotifications()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span id="enable-btn-text">Allow Notifications</span>
+  </button>
+
+  <!-- Status card -->
+  <div class="status-card">
+    <div class="status-row">
+      <div class="dot grey" id="dot-notif"></div>
+      <span class="status-label">Notifications</span>
+      <span class="status-val" id="val-notif">Off</span>
+      <div class="sound-indicator muted" id="sound-ind" title="Sound status">🔕</div>
+    </div>
+    <div class="status-row">
+      <div class="dot grey" id="dot-sync"></div>
+      <span class="status-label">Supabase sync</span>
+      <span class="status-val" id="val-sync">Not configured</span>
+    </div>
+    <div class="status-row">
+      <div class="dot grey" id="dot-data"></div>
+      <span class="status-label">Timetable</span>
+      <span class="status-val" id="val-data">No data</span>
+    </div>
+  </div>
+
+  <!-- Next up -->
+  <div class="next-card" id="next-card">
+    <div class="next-label">⏰ Up next</div>
+    <div class="next-name" id="next-name">—</div>
+    <div class="next-time" id="next-time-label">—</div>
+    <div class="next-countdown" id="next-countdown">—</div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-card">
+    <div class="timeline-title" id="timeline-title">Today's schedule</div>
+    <div id="timeline"><div class="empty"><div class="empty-icon">📭</div>No timetable loaded yet</div></div>
+  </div>
+
+  <div class="footer">Time: <span class="clock-time" id="clock">—</span></div>
+
+</div>
+
+<div id="toasts"></div>
 
 <script>
-// ── CONFIG ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════════════
 const CONFIG = {
   supabaseUrl:  'https://pumhjielzbnivhpftnrl.supabase.co',
   supabaseKey:  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1bWhqaWVsemJuaXZocGZ0bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzcxOTEsImV4cCI6MjA5ODgxMzE5MX0.bRCE_UHikrPxI4T544LZ3x0giPhtwONB3tFbp86pzSE',
@@ -285,58 +425,164 @@ const CONFIG = {
   pollInterval: 5000,
 };
 
-// URL Parameters Override
+// Override with URL params
 const params = new URLSearchParams(location.search);
 if (params.get('url'))    CONFIG.supabaseUrl  = params.get('url');
 if (params.get('key'))    CONFIG.supabaseKey  = params.get('key');
 if (params.get('device')) CONFIG.device       = params.get('device');
 
-// ── GLOBAL STATE ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════════════
 let timetable = {};
 let notifEnabled = false;
-let lastFiredKey = '';
-let pollTimer = null;
 let audioCtx = null;
-let swRegistration = null;
+let soundEnabled = false;
+let firedNotifications = new Set(); // De-duplicate with Set
+let pollTimer = null;
+let lastDataHash = '';
 
-// ── AUDIO ENGINE ──────────────────────────────────────────────────────
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+// ══════════════════════════════════════════════════════════════════════════════
+// AUDIO SYSTEM — Works in all browsers after user interaction
+// ══════════════════════════════════════════════════════════════════════════════
+function initAudioContext() {
+  if (audioCtx) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    
+    // Resume is required by Chrome's autoplay policy
+    audioCtx.resume().then(() => {
+      soundEnabled = true;
+      updateSoundIndicator(true);
+      resolve();
+    }).catch(() => {
+      soundEnabled = false;
+      resolve();
+    });
+  });
+}
+
+function playNotificationSound() {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  
+  try {
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    // Two-tone ding (high-low descend)
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch(e) {
+    console.log('Sound play failed:', e.message);
   }
 }
 
-function playSound() {
-  initAudio();
-  if (!audioCtx) return;
-
-  const now = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  osc.type = 'sine';
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  // Sound sequence: 880Hz (A5) -> 1320Hz (E6)
-  osc.frequency.setValueAtTime(880, now);
-  osc.frequency.setValueAtTime(1320, now + 0.12);
-
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-  osc.start(now);
-  osc.stop(now + 0.6);
+function updateSoundIndicator(enabled) {
+  const ind = document.getElementById('sound-ind');
+  ind.textContent = enabled ? '🔊' : '🔕';
+  ind.className = `sound-indicator ${enabled ? '' : 'muted'}`;
 }
 
-// ── TIME UTILITIES ────────────────────────────────────────────────────
-function toMins(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
-function nowMins() { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
-function todayName() { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; }
+// ══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATION SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+async function handleEnableNotifications() {
+  if (Notification.permission === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Already enabled!', 's', '✓');
+    return;
+  }
+  
+  // Initialize audio on user interaction
+  await initAudioContext();
+  
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifEnabled = true;
+    updateNotifStatus(true);
+    toast('Notifications enabled!', 's', '✓');
+    tick();
+  } else {
+    toast('Permission denied — check browser settings', 'w', '⚠️');
+  }
+}
+
+function updateNotifStatus(on) {
+  setStatus('notif', on ? 'green' : 'grey', on ? 'Enabled ✓' : 'Off', on ? 'green' : '');
+  const btn = document.getElementById('enable-btn');
+  const txt = document.getElementById('enable-btn-text');
+  if (on) {
+    btn.disabled = true;
+    txt.textContent = '✓ Notifications Active';
+  }
+}
+
+function fireNotification(title, body, uniqueKey, durationSec = 10) {
+  // Prevent duplicate notifications
+  if (firedNotifications.has(uniqueKey)) return;
+  firedNotifications.add(uniqueKey);
+  
+  // Play sound
+  if (soundEnabled) playNotificationSound();
+  
+  // Show via Service Worker (consistent appearance)
+  if (navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title,
+      body,
+      tag: uniqueKey,
+      duration: durationSec * 1000
+    });
+  } else {
+    // Fallback to standard Notification API
+    const notif = new Notification(title, {
+      body,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">📅</text></svg>',
+      tag: uniqueKey,
+      requireInteraction: false
+    });
+    
+    if (durationSec) {
+      setTimeout(() => notif.close(), durationSec * 1000);
+    }
+  }
+  
+  // Clean up from dedup after duration
+  setTimeout(() => {
+    firedNotifications.delete(uniqueKey);
+  }, durationSec * 1000 + 500);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TIME HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function toMins(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function nowMins() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function todayName() {
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+}
 
 function minsToTimeString(totalMins) {
   const h = Math.floor(totalMins / 60).toString().padStart(2, '0');
@@ -344,50 +590,51 @@ function minsToTimeString(totalMins) {
   return `${h}:${m}`;
 }
 
-// ── INITIALIZATION ─────────────────────────────────────────────────────
-async function init() {
-  updateClock();
-  setInterval(updateClock, 1000);
-  setInterval(tick, 1000); // 1s tick for precise state evaluation
-
-  // Global user interaction handler for Web Audio context unlocking
-  document.body.addEventListener('click', initAudio, { once: true });
-
-  // Load cached timetable
-  const cached = localStorage.getItem('os_tt');
-  if (cached) { 
-    try { 
-      timetable = JSON.parse(cached); 
-      renderTimeline(); 
-    } catch(e) {} 
-  }
-
-  // Register Service Worker
-  await registerSW();
-
-  // Check initial notification status
-  if (Notification.permission === 'granted') {
-    notifEnabled = true;
-    updateNotifStatus(true);
-  }
-
-  // Start polling backend
-  if (CONFIG.supabaseUrl && CONFIG.supabaseKey) {
-    startPolling();
-  } else {
-    setStatus('sync', 'grey', 'Not configured', '');
-  }
+function minutesDiff(timeStr) {
+  return toMins(timeStr) - nowMins();
 }
 
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  document.getElementById('date-label').textContent =
-    now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+// ══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATION LOGIC — Improved
+// ══════════════════════════════════════════════════════════════════════════════
+function tick() {
+  renderTimeline();
+  if (!notifEnabled) return;
+  
+  const day = todayName();
+  const slots = timetable[day] || [];
+  const now = nowMins();
+  const currentTimeStr = minsToTimeString(now);
+  
+  slots.forEach(slot => {
+    // Priority 1: Alert times (5-min, 2-min warnings)
+    if (Array.isArray(slot.alerts)) {
+      slot.alerts.forEach(alert => {
+        if (alert.triggerTime === currentTimeStr) {
+          const key = `alert-${alert.id || slot.startTime}-${alert.triggerTime}`;
+          fireNotification(
+            '⏰ ' + (slot.notificationMessage || slot.label),
+            `Starts at ${slot.startTime}`,
+            key,
+            8
+          );
+        }
+      });
+    }
+    
+    // Priority 2: Class starting now (exact match)
+    const diff = toMins(slot.startTime) - now;
+    if (diff === 0) {
+      const msg = slot.notificationMessage?.replace('Next', 'Now') || `${slot.label} starting now!`;
+      const key = `now-${slot.startTime}`;
+      fireNotification('📢 ' + msg, `It's ${slot.startTime}`, key, 10);
+    }
+  });
 }
 
-// ── SUPABASE SYNC ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ══════════════════════════════════════════════════════════════════════════════
 function startPolling() {
   setStatus('sync', 'yellow', 'Connecting...', '');
   fetchData();
@@ -399,219 +646,187 @@ async function fetchData() {
   try {
     const url = `${CONFIG.supabaseUrl}/rest/v1/officesync_timetable?device=eq.${encodeURIComponent(CONFIG.device)}&select=data,updated_at&order=updated_at.desc&limit=1`;
     const res = await fetch(url, {
-      headers: { 'apikey': CONFIG.supabaseKey, 'Authorization': `Bearer ${CONFIG.supabaseKey}` }
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`
+      }
     });
     
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const rows = await res.json();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     
+    const rows = await res.json();
     if (!rows.length) {
-      setStatus('sync', 'yellow', 'Connected — no data', '');
-      setStatus('data', 'grey', 'No row found', '');
+      setStatus('sync', 'yellow', 'Connected', '');
+      setStatus('data', 'grey', 'No data', '');
       return;
     }
-
-    const newStr = rows[0].data;
-    const newTT  = JSON.parse(newStr);
-    const changed = JSON.stringify(newTT) !== JSON.stringify(timetable);
     
-    timetable = newTT;
-    localStorage.setItem('os_tt', newStr);
+    const dataStr = rows[0].data;
+    const newData = JSON.parse(dataStr);
+    
+    // Only re-render if data changed
+    if (dataStr !== lastDataHash) {
+      timetable = newData;
+      lastDataHash = dataStr;
+      localStorage.setItem('os_timetable', dataStr);
+      renderTimeline();
+      toast('Timetable updated', 's', '🔄');
+    }
     
     setStatus('sync', 'green', 'Live ✓', 'green');
-    const days = Object.keys(timetable).length;
-    setStatus('data', 'green', `${days} days loaded`, 'green');
+    const dayCount = Object.keys(timetable).length;
+    setStatus('data', 'green', `${dayCount} days`, 'green');
     
-    if (changed) { 
-      renderTimeline(); 
-      toast('Timetable updated', 's'); 
-    }
+    tick();
   } catch(e) {
-    setStatus('sync', 'red', 'Error — retrying', 'red');
+    setStatus('sync', 'red', 'Error', 'red');
+    console.error('Fetch error:', e);
   }
 }
 
-// ── LOGIC TICK & SCHEDULER ─────────────────────────────────────────────
-function tick() {
-  renderTimeline();
-  if (!notifEnabled) return;
-
-  const slots = timetable[todayName()] || [];
-  const now = nowMins();
-  const currentTimeString = minsToTimeString(now);
-
-  slots.forEach(s => {
-    // Alert schedule triggers
-    if (s.alerts && Array.isArray(s.alerts)) {
-      s.alerts.forEach(alert => {
-        if (alert.triggerTime === currentTimeString) {
-          const uniqueKey = alert.id ? alert.id.toString() : `${s.startTime}-${alert.triggerTime}`;
-          fire('⏰ ' + s.notificationMessage, `Starts at ${s.startTime}`, uniqueKey, alert.duration);
-        }
-      });
-    }
-
-    // Exact period start trigger
-    const diff = toMins(s.startTime) - now;
-    if (diff === 0) {
-      const msgNow = s.notificationMessage
-        ? s.notificationMessage.replace('Next period', 'NOW')
-        : (s.label + ' starting now!');
-      fire('📢 ' + msgNow, `Scheduled time: ${s.startTime}`, `${s.startTime}-now`, 10);
-    }
-  });
-}
-
-// ── DISPATCH NOTIFICATIONS ──────────────────────────────────────────────
-function fire(title, body, key, durationSeconds) {
-  if (lastFiredKey === key) return;
-  lastFiredKey = key;
-
-  // Sound cue
-  playSound();
-
-  // Unified Notification Execution (SW Priority)
-  if (swRegistration && 'showNotification' in swRegistration) {
-    swRegistration.showNotification(title, {
-      body: body,
-      icon: 'icon.png',
-      badge: 'icon.png',
-      tag: key,
-      requireInteraction: true
-    });
-  } else if (Notification.permission === 'granted') {
-    const notif = new Notification(title, {
-      body: body,
-      icon: 'icon.png',
-      tag: key,
-      requireInteraction: true
-    });
-    if (durationSeconds) {
-      setTimeout(() => notif.close(), durationSeconds * 1000);
-    }
-  }
-}
-
-// ── UI TIMELINE RENDERER ───────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// RENDERING
+// ══════════════════════════════════════════════════════════════════════════════
 function renderTimeline() {
   const day = todayName();
   const slots = timetable[day] || [];
   const now = nowMins();
-
+  
   document.getElementById('timeline-title').textContent = `${day}'s schedule`;
-
+  
   if (!slots.length) {
-    document.getElementById('timeline').innerHTML = `<div class="empty">No slots found for ${day}</div>`;
+    document.getElementById('timeline').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        No classes today — enjoy!
+      </div>
+    `;
     document.getElementById('next-card').style.display = 'none';
     return;
   }
-
+  
+  // Find next upcoming slot
   const nextSlot = slots.find(s => toMins(s.startTime) > now);
-
-  // Up Next Card
-  const nc = document.getElementById('next-card');
+  
+  // Render "Up next" card
+  const ncEl = document.getElementById('next-card');
   if (nextSlot) {
-    nc.style.display = 'block';
-    document.getElementById('next-name').textContent = nextSlot.label;
     const diff = toMins(nextSlot.startTime) - now;
-    document.getElementById('next-time-label').textContent = `Starts at ${nextSlot.startTime}`;
-    document.getElementById('next-countdown').textContent = diff === 1 ? '1 min away' : `${diff} mins away`;
-  } else {
-    nc.style.display = 'none';
-  }
-
-  // Schedule Rows
-  document.getElementById('timeline').innerHTML = slots.map((s, idx) => {
-    const smins = toMins(s.startTime);
+    const countdownText = diff <= 1 ? '1 min away' : `${diff} mins away`;
     
-    // Duration estimation logic
-    let duration = 45; 
-    if (slots[idx + 1]) {
-      duration = toMins(slots[idx + 1].startTime) - smins;
-    }
-
-    const isNow = smins <= now && now < (smins + duration);
-    const isNext = nextSlot && s.startTime === nextSlot.startTime;
-    const isDone = smins + duration <= now;
-
-    const cls = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
-    const badge = isNow  ? '<span class="badge badge-now">Now</span>'
-                : isNext ? '<span class="badge badge-next">Next</span>'
-                : isDone ? '<span class="badge badge-done">Done</span>' : '';
-
-    return `
-      <div class="slot ${cls}">
-        <span class="slot-time">${s.startTime}</span>
-        <span class="slot-name">${s.label}</span>
-        ${badge}
-      </div>
-    `;
+    document.getElementById('next-name').textContent = nextSlot.label;
+    document.getElementById('next-time-label').textContent = `Starts at ${nextSlot.startTime}`;
+    document.getElementById('next-countdown').textContent = countdownText;
+    ncEl.style.display = 'block';
+  } else {
+    ncEl.style.display = 'none';
+  }
+  
+  // Render timeline slots
+  document.getElementById('timeline').innerHTML = slots.map(slot => {
+    const slotMins = toMins(slot.startTime);
+    const isNow = slotMins <= now && slotMins > now - 45;
+    const isNext = nextSlot && slot.startTime === nextSlot.startTime;
+    const isDone = slotMins < now && !isNow;
+    
+    const classList = isNow ? 'is-now' : isNext ? 'is-next' : isDone ? 'done' : '';
+    const badge = isNow
+      ? '<span class="badge badge-now">Now</span>'
+      : isNext ? '<span class="badge badge-next">Next</span>'
+      : isDone ? '<span class="badge badge-done">Done</span>' : '';
+    
+    return `<div class="slot ${classList}">
+      <span class="slot-time">${slot.startTime}</span>
+      <span class="slot-name">${slot.label}</span>
+      ${badge}
+    </div>`;
   }).join('');
 }
 
-// ── NOTIFICATION & SERVICE WORKER HANDLERS ────────────────────────────
-async function enableNotifications() {
-  initAudio();
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  document.getElementById('date-label').textContent = now.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════════════════════════════════════════════════
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('./sw.js');
+  } catch(e) {
+    console.log('SW registration failed — notifications will use fallback');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function setStatus(id, dotColor, text, textColor) {
+  document.getElementById('dot-' + id).className = 'dot ' + dotColor;
+  const valEl = document.getElementById('val-' + id);
+  valEl.textContent = text;
+  valEl.className = 'status-val ' + (textColor || '');
+}
+
+function toast(msg, type = 'i', icon = '') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+async function init() {
+  // Load cached timetable
+  const cached = localStorage.getItem('os_timetable');
+  if (cached) {
+    try {
+      timetable = JSON.parse(cached);
+      lastDataHash = cached;
+      renderTimeline();
+    } catch(e) {}
+  }
   
+  // Clock
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(tick, 30000);
+  
+  // Check notification permission
   if (Notification.permission === 'granted') {
     notifEnabled = true;
     updateNotifStatus(true);
-    toast('Notifications & Audio active', 's');
-    playSound();
-    return;
+    await initAudioContext();
   }
-
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    notifEnabled = true;
-    updateNotifStatus(true);
-    toast('Notifications enabled! ✓', 's');
-    playSound();
-    tick();
+  
+  // Start polling if configured
+  if (CONFIG.supabaseUrl && CONFIG.supabaseKey) {
+    startPolling();
   } else {
-    toast('Permission denied', 'w');
+    setStatus('sync', 'grey', 'Not configured', '');
   }
+  
+  // Register service worker
+  await registerServiceWorker();
 }
 
-function updateNotifStatus(on) {
-  setStatus('notif', on ? 'green' : 'grey', on ? 'Active ✓' : 'Off', on ? 'green' : '');
-  const btn = document.getElementById('enable-btn');
-  const txt = document.getElementById('enable-btn-text');
-  if (on) {
-    btn.disabled = true;
-    txt.textContent = '✓ Notifications & Audio Active';
-  }
-}
-
-async function registerSW() {
-  if ('serviceWorker' in navigator) {
-    try { 
-      swRegistration = await navigator.serviceWorker.register('./sw.js'); 
-    } catch(e) {}
-  }
-}
-
-// ── AUXILIARY UI HELPERS ───────────────────────────────────────────────
-function setStatus(id, dotColor, text, textColor) {
-  const dot = document.getElementById('dot-' + id);
-  const val = document.getElementById('val-' + id);
-  if (dot) dot.className = 'dot ' + dotColor;
-  if (val) {
-    val.textContent = text;
-    val.className   = 'status-val ' + (textColor || '');
-  }
-}
-
-function toast(msg, type = 'i') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
-
-// Execute Entrypoint
+// Start app
 init();
 </script>
+
 </body>
 </html>
